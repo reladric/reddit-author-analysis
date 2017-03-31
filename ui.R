@@ -102,7 +102,9 @@ shinyUI(fluidPage(# Application title
       tabPanel("Karma Analysis", fluidRow(column(
         12, wellPanel(uiOutput("monthSelector"))
       )), fluidRow(column(
-        12, wellPanel(plotOutput("currentMonthPlot", width = "100%"))
+        6, wellPanel(plotOutput("currentMonthHeatMap", width = "100%"))
+      ),column(
+          6, wellPanel(plotOutput("currentMonthPlot", width = "100%"))
       )))
     )
   ))))
