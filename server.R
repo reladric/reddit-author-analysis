@@ -203,7 +203,7 @@ heatdata_for_month <- function(x, complete_data) {
     heat_data$labelField[(heat_data$`Feminism Score` == "-" &
                               heat_data$`Mens Right Score` == "-")] <-
         paste("Trolls",heat_data$`# of users`[(heat_data$`Feminism Score` == "-" &
-                                                   heat_data$`Mens Right Score` == "+")], sep = ": ")
+                                                   heat_data$`Mens Right Score` == "-")], sep = ": ")
     return (heat_data)
 }
 plotdata_for_month <- function(x, complete_data) {
@@ -223,8 +223,11 @@ plotdata_for_month <- function(x, complete_data) {
             ), by = user]
         plot_data$fem_avg <-
             plot_data$fem_score / plot_data$fem_posts
+        plot_data$fem_avg[is.nan(plot_data$fem_avg)] <- 0
+        
         plot_data$mr_avg <-
             plot_data$mr_score / plot_data$mr_posts
+        plot_data$mr_avg[is.nan(plot_data$mr_avg)] <- 0
         plot_data$fem_z_score <- scale(plot_data$fem_avg)
         plot_data$mr_z_score <- scale(plot_data$mr_avg)
         
@@ -433,7 +436,7 @@ shinyServer(function(input, output) {
     output$monthSelector <- renderUI({
         sliderInput(
             "monthSelector",
-            label =  "Month",
+            label =  "Up to Month",
             min = min(score_data$month),
             max = max(score_data$month),
             value = min(score_data$month)
@@ -450,7 +453,7 @@ shinyServer(function(input, output) {
             geom_text(aes(label =  `labelField`)) +
             ggtitle(
                 paste(
-                    "Mensrights v Feminism - Zscore of average Karma per comment (Month : ",
+                    "Mensrights v Feminism - Zscore of average cumulative karma per comment (Month : ",
                     values$selected_month,
                     ")",
                     sep = " "
@@ -459,18 +462,27 @@ shinyServer(function(input, output) {
                 size = 15,
                 face = "bold",
                 hjust = 0.5
-            ))
+            )) 
         plot
     })
     output$currentMonthPlot <- renderPlot({
         plot_data <-
             plotdata_for_month(values$selected_month,score_data)
+        plot_data$fem_avg <-
+            plot_data$fem_avg + abs(min(plot_data$fem_avg)) + 1
+        plot_data$mr_avg <-
+            plot_data$mr_avg + abs(min(plot_data$mr_avg)) + 1
+        
+        ylims <-
+            quantile(plot_data$mr_z_score, c(.5, .95), na.rm = TRUE)
+        xlims <-
+            quantile(plot_data$fem_z_score, c(.5, .95), na.rm = TRUE)
         plot <-
             ggplot(data = plot_data, aes(x = `fem_z_score`, y = `mr_z_score`)) +
             geom_point(alpha = 0.3) +
             ggtitle(
                 paste(
-                    "Mensrights v Feminism - Zscore of average Karma per comment (Month : ",
+                    "Mensrights v Feminism - Zscore of average cumulative karma per comment (Up to Month : ",
                     values$selected_month,
                     ")",
                     sep = " "
@@ -479,8 +491,8 @@ shinyServer(function(input, output) {
                 size = 15,
                 face = "bold",
                 hjust = 0.5
-            )) + geom_vline(xintercept = 0) + geom_hline(yintercept = 0) + coord_trans(y =
-                                                                                           "log10", x = "log10")
+            )) + geom_vline(xintercept = 0) + geom_hline(yintercept = 0)  + xlim(c(-2,2)) +
+            ylim(c(-2,2))+xlab("Feminism Z Score(5% - 95%) ")+ylab("MensRights Z Score (5% - 95%)")
         plot
     })
 })
