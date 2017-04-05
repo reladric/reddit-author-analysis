@@ -462,9 +462,52 @@ shinyServer(function(input, output) {
                 size = 15,
                 face = "bold",
                 hjust = 0.5
-            )) 
+            ))
         plot
     })
+    output$selected_user_details <-
+        renderText({
+            if (is.null(input$plot_click$x)) {
+                "Click on the plot"
+            }else{
+                y_reduced <- plotdata_for_month(values$selected_month,score_data)
+                previous_row_count <- nrow(y_reduced)
+                granularity <- 0.5
+                loopcount <- 0
+                while (TRUE) {
+                    loopcount <- loopcount + 1
+                    x_reduced <-
+                        y_reduced[(
+                            y_reduced$fem_z_score < input$plot_click$x + granularity &
+                                y_reduced$fem_z_score > input$plot_click$x - granularity
+                        ),]
+                    y_reduced <-
+                        x_reduced[(
+                            x_reduced$mr_z_score < input$plot_click$y + granularity &
+                                x_reduced$mr_z_score > input$plot_click$y - granularity
+                        ),]
+                    current_row_count <- nrow(y_reduced)
+                    if (current_row_count < 1) {
+                        granularity <- granularity + (granularity / 10)
+                        #print("Increasing granularity")
+                    }
+                    else if (current_row_count > 1) {
+                        granularity <- granularity - (granularity / 10)
+                        #print("Reducing granularity")
+                    }else{
+                        print("Zeroed in")
+                        break
+                    }
+                    if (loopcount > 100) {
+                        y_reduced$user="Unable to resolve user. Try again"
+                        break
+                    }
+                    print(loopcount)
+                    previous_row_count <- current_row_count
+                }
+                y_reduced$user
+            }
+        })
     output$currentMonthPlot <- renderPlot({
         plot_data <-
             plotdata_for_month(values$selected_month,score_data)
@@ -492,7 +535,7 @@ shinyServer(function(input, output) {
                 face = "bold",
                 hjust = 0.5
             )) + geom_vline(xintercept = 0) + geom_hline(yintercept = 0)  + xlim(c(-2,2)) +
-            ylim(c(-2,2))+xlab("Feminism Z Score(5% - 95%) ")+ylab("MensRights Z Score (5% - 95%)")
+            ylim(c(-2,2)) + xlab("Feminism Z Score(5% - 95%) ") + ylab("MensRights Z Score (5% - 95%)")
         plot
     })
 })
