@@ -105,7 +105,7 @@ shinyUI(fluidPage(# Application title
                 ))), fluidRow(column(6, wellPanel(
                     plotOutput("currentMonthHeatMap", width = "100%")
                 )),column(6, wellPanel(
-                    plotOutput("currentMonthPlot", width = "100%", click = "plot_click")
+                    plotOutput("currentMonthPlot", width = "100%")
                 ))), fluidRow(wellPanel(htmlOutput("selected_user_details")))
             )
         )

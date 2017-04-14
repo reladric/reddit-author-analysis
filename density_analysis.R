@@ -7,7 +7,7 @@ source("global.R")
 score_data<-compute_data()[[4]]
 
 all_month_data <-
-    lapply(seq(1, 133) , plotdata_for_month,score_data)
+    lapply(seq(6, 133) , plotdata_for_month,score_data)
 all_month_matrix <- do.call(rbind, all_month_data)
 all_month_frame <- as.data.frame(all_month_matrix)
 all_month_table <- data.table(all_month_frame)

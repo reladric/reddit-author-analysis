@@ -152,7 +152,7 @@ getAuthors <- function(quadrant = 1, user_statistics) {
 }
 #### Generate Quadrant Heatmap data given month ----
 heatdata_for_month <- function(x, complete_data) {
-  selected_score_data <- complete_data[complete_data$month <= x,]
+  selected_score_data <- complete_data[complete_data$month <= x, ]
   if (is.null(dim(selected_score_data)) ||
       dim(selected_score_data)[1] == 0) {
     heat_data = data.frame(matrix(c(
@@ -215,21 +215,24 @@ heatdata_for_month <- function(x, complete_data) {
 #### Generate Scatter Plot data given month ----
 plotdata_for_month <-
   function(x,
-           x_feature = "fem_avg",
-           y_feature = "mr_avg",
-           window_size = 6,
-           complete_data) {
+           complete_data,
+           feature = "avg",
+           scale = TRUE,
+           center="median",
+           window_size = 6) {
     # Window start and end
     if (x >= window_size) {
       w_start <-  x - window_size
       w_end <-  x
-      
       selected_score_data <-
         complete_data[(complete_data$month >= w_start &
-                         complete_data$month <= w_end),]
+                         complete_data$month <= w_end), ]
       if (is.null(dim(selected_score_data)) ||
           dim(selected_score_data)[1] == 0) {
-        plot_data = data.frame(x = numeric(0), y = numeric(0))
+        plot_data = data.frame(x = numeric(0),
+                               y = numeric(0),
+                               month_number = numeric(0))
+        print("Empty selection")
       } else{
         selected_score_table = data.table(selected_score_data)
         plot_data <-
@@ -238,12 +241,12 @@ plotdata_for_month <-
             mr_score = sum(karmaMR),
             fem_posts = sum(numPostsFem),
             mr_posts = sum(numPostsMR),
-            duration = max(month) - min(month)
+            active_duration = length(month)
           ), by = user]
         
         plot_data <-
           plot_data[(plot_data$mr_posts != 0 &
-                       plot_data$fem_posts != 0), ]
+                       plot_data$fem_posts != 0),]
         plot_data$fem_avg <-
           plot_data$fem_score / plot_data$fem_posts
         plot_data$fem_avg[is.nan(plot_data$fem_avg)] <- 0
@@ -251,18 +254,37 @@ plotdata_for_month <-
         plot_data$mr_avg <-
           plot_data$mr_score / plot_data$mr_posts
         plot_data$mr_avg[is.nan(plot_data$mr_avg)] <- 0
-        mu <- mean(plot_data$fem_avg)
-        sigma <- sd(plot_data$fem_avg)
-        plot_data$fem_z_score <- (plot_data$fem_avg - mu) / sigma
-        mu <- mean(plot_data$mr_avg)
-        sigma <- sd(plot_data$mr_avg)
-        plot_data$mr_z_score <- (plot_data$mr_avg - mu) / sigma
+        x_field_name <- paste("fem_", feature, sep = "")
+        y_field_name <- paste("mr_", feature, sep = "")
+        plot_data$x <-
+          plot_data[[x_field_name]]
+        plot_data$y <- plot_data[[y_field_name]]
+        if(center== "mean"){
+          x_center <- mean(plot_data$x)
+          y_center <- mean(plot_data$y)
+        }
+        else{
+          x_center <- median(plot_data$x)
+          y_center <- median(plot_data$y)
+        }
+        if (scale & center =="mean") {
+          x_sigma <- sd(plot_data$x)
+          plot_data$x <-
+            (plot_data$x - x_center) / x_sigma
+          y_center <- mean(plot_data$y)
+          y_sigma <- sd(plot_data$y)
+          plot_data$y <-
+            (plot_data$y - y_center) / y_sigma
+        }
         plot_data$month_number <- x
-        
-        
+        plot_data$hline <- y_center
+        plot_data$vline <- x_center
       }
     } else{
-      plot_data = data.frame(x = numeric(0), y = numeric(0))
+      print("Too low")
+      plot_data = data.frame(x = numeric(0),
+                             y = numeric(0),
+                             month_number = numeric(0))
     }
     return (as.data.frame(plot_data))
   }

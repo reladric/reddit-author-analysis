@@ -1,6 +1,3 @@
-
-
-
 #### Server Start ----
 shinyServer(function(input, output) {
   ## Test
@@ -14,7 +11,7 @@ shinyServer(function(input, output) {
     if (is.null(value)) {
       value <- progress$getValue()
       value <- value + (progress$getMax() - value) / 5
-    }
+    } 
     progress$set(value = value, detail = detail)
   }
   #### Inits ----
@@ -42,8 +39,9 @@ shinyServer(function(input, output) {
       lastUpdated = "Aerik",
       selected_month = 100,
       selected_window = 1,
-      selected_x_feature = "fem_z_score",
-      selected_y_feature = "mr_z_score"
+      selected_feature = "avg",
+      scale = FALSE,
+      center = "median"
     )
   #### Tab 1 - User Analysis ----
   #### Tab 1 -  Quadrant selection for users  ----
@@ -216,7 +214,7 @@ shinyServer(function(input, output) {
     sliderInput(
       "monthSelector",
       label =  "Up to Month",
-      min = min(score_data$month),
+      min = min(score_data$month) + values$selected_window,
       max = max(score_data$month),
       value = min(score_data$month)
     )
@@ -253,23 +251,26 @@ shinyServer(function(input, output) {
   output$currentMonthPlot <- renderPlot({
     plot_data <-
       plotdata_for_month(
-        values$selected_month,
-        values$selected_x_feature,
-        values$selected_y_feature,
-        values$selected_window,
-        score_data
+        as.numeric(values$selected_month),
+        score_data,
+        values$selected_feature,
+        values$scale,
+        values$center,
+        as.numeric(values$selected_window)
+        
       )
     plot <-
-      ggplot(data = plot_data,
-             aes(
-               x = values$selected_x_feature,
-               y = values$selected_y_feature
-             )) +
-      geom_point(alpha = 0.3) +
+      ggplot(plot_data, aes(x = x, y = y)) +
+      stat_density2d(aes(fill = ..level..), geom = "polygon") +
+      scale_alpha_continuous(limits = c(0, .5), breaks = seq(0, .5, by = 0.1)) +
       ggtitle(
         paste(
-          "Mensrights v Feminism - Zscore of average cumulative karma per comment (Up to Month : ",
+          "Mensrights v Feminism -",
+          values$feature,
+          "score for",
           values$selected_month,
+          "(sliding window:",
+          values$selected_window,
           ")",
           sep = " "
         )
@@ -277,53 +278,56 @@ shinyServer(function(input, output) {
         size = 15,
         face = "bold",
         hjust = 0.5
-      )) + geom_vline(xintercept = 0) + geom_hline(yintercept = 0)  + xlim(c(-2, 2)) +
-      ylim(c(-2, 2)) + xlab("Feminism Z Score(5% - 95%) ") + ylab("MensRights Z Score (5% - 95%)")
+      )) +
+      geom_vline(xintercept = unique(plot_data$vline)) +
+      geom_hline(yintercept = unique(plot_data$hline)) +
+      xlab(paste("Feminism", values$feature, sep = " ")) +
+      ylab(paste("MensRights", values$feature, sep = " "))
     plot
   })
   #### Tab 2 -User details ----
-  output$selected_user_details <-
-    renderText({
-      if (is.null(input$plot_click$x)) {
-        "Click on the plot"
-      } else{
-        y_reduced <- plotdata_for_month(values$selected_month, score_data)
-        previous_row_count <- nrow(y_reduced)
-        granularity <- 0.5
-        loopcount <- 0
-        while (TRUE) {
-          loopcount <- loopcount + 1
-          x_reduced <-
-            y_reduced[(
-              y_reduced$fem_z_score < input$plot_click$x + granularity &
-                y_reduced$fem_z_score > input$plot_click$x - granularity
-            ),]
-          y_reduced <-
-            x_reduced[(
-              x_reduced$mr_z_score < input$plot_click$y + granularity &
-                x_reduced$mr_z_score > input$plot_click$y - granularity
-            ),]
-          current_row_count <- nrow(y_reduced)
-          if (current_row_count < 1) {
-            granularity <- granularity + (granularity / 10)
-            #print("Increasing granularity")
-          }
-          else if (current_row_count > 1) {
-            granularity <- granularity - (granularity / 10)
-            #print("Reducing granularity")
-          } else{
-            print("Zeroed in")
-            break
-          }
-          if (loopcount > 100) {
-            y_reduced$user = "Unable to resolve user. Try again"
-            break
-          }
-          print(loopcount)
-          previous_row_count <- current_row_count
-        }
-        y_reduced$user
-      }
-    })
+  # output$selected_user_details <-
+  #   renderText({
+  #     if (is.null(input$plot_click$x)) {
+  #       "Click on the plot"
+  #     } else{
+  #       y_reduced <- plotdata_for_month(values$selected_month, score_data)
+  #       previous_row_count <- nrow(y_reduced)
+  #       granularity <- 0.5
+  #       loopcount <- 0
+  #       while (TRUE) {
+  #         loopcount <- loopcount + 1
+  #         x_reduced <-
+  #           y_reduced[(
+  #             y_reduced$fem_z_score < input$plot_click$x + granularity &
+  #               y_reduced$fem_z_score > input$plot_click$x - granularity
+  #           ), ]
+  #         y_reduced <-
+  #           x_reduced[(
+  #             x_reduced$mr_z_score < input$plot_click$y + granularity &
+  #               x_reduced$mr_z_score > input$plot_click$y - granularity
+  #           ), ]
+  #         current_row_count <- nrow(y_reduced)
+  #         if (current_row_count < 1) {
+  #           granularity <- granularity + (granularity / 10)
+  #           #print("Increasing granularity")
+  #         }
+  #         else if (current_row_count > 1) {
+  #           granularity <- granularity - (granularity / 10)
+  #           #print("Reducing granularity")
+  #         } else{
+  #           print("Zeroed in")
+  #           break
+  #         }
+  #         if (loopcount > 100) {
+  #           y_reduced$user = "Unable to resolve user. Try again"
+  #           break
+  #         }
+  #         print(loopcount)
+  #         previous_row_count <- current_row_count
+  #       }
+  #       y_reduced$user
+  #     }
+  #   })
   
 })
