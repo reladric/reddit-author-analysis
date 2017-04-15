@@ -100,13 +100,22 @@ shinyUI(fluidPage(# Application title
                 ))
             ),
             tabPanel(
-                "Karma Analysis", fluidRow(column(12, wellPanel(
-                    uiOutput("monthSelector")
-                ))), fluidRow(column(6, wellPanel(
+                "Karma Analysis", fluidRow(
+                    fluidRow(
+                        column(3, wellPanel(uiOutput("feature"))),
+                        column(3, wellPanel(uiOutput("window_size"))),
+                        column(3, wellPanel(uiOutput("centering"))),
+                        column(3, wellPanel(uiOutput("scale")))
+                    ), fluidRow(style = "border-bottom:0px;padding-bottom:0px",column(12, wellPanel(
+                        uiOutput("monthSelector")
+                    )))
+                ), fluidRow(style = "border-top:0px;padding-top:0px",column(6, wellPanel(
                     plotOutput("currentMonthHeatMap", width = "100%")
                 )),column(6, wellPanel(
                     plotOutput("currentMonthPlot", width = "100%")
-                ))), fluidRow(wellPanel(htmlOutput("selected_user_details")))
+                ))), fluidRow(wellPanel(htmlOutput(
+                    "selected_user_details"
+                )))
             )
         )
     ))))

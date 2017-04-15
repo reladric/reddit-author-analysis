@@ -221,16 +221,17 @@ plotdata_for_month <-
              center = "median",
              window_size = 6) {
         # Window start and end
-        #         print(scale)
-        #         print(feature)
-        #         print(center)
-        #         print(window_size)
+        print(scale)
+        print(feature)
+        print(center)
+        print(window_size)
         if (x >= window_size) {
             w_start <-  x - window_size
             w_end <-  x
             selected_score_data <-
                 complete_data[(complete_data$month >= w_start &
                                    complete_data$month <= w_end),]
+            
             if (is.null(dim(selected_score_data)) ||
                 dim(selected_score_data)[1] == 0) {
                 plot_data = data.frame(
@@ -249,10 +250,11 @@ plotdata_for_month <-
                         mr_posts = sum(numPostsMR),
                         active_duration = length(month)
                     ), by = user]
-                plot_data<-as.data.frame(plot_data)
+                plot_data <- as.data.frame(plot_data)
                 plot_data <-
                     plot_data[(plot_data$mr_posts != 0 &
                                    plot_data$fem_posts != 0),]
+                
                 plot_data$fem_avg <-
                     plot_data$fem_score / plot_data$fem_posts
                 plot_data$fem_avg[is.nan(plot_data$fem_avg)] <- 0
@@ -274,7 +276,7 @@ plotdata_for_month <-
                     x_center <- median(plot_data$x)
                     y_center <- median(plot_data$y)
                 }
-                if (scale & center == "mean") {
+                if (scale) {
                     x_sigma <- sd(plot_data$x)
                     plot_data$x <-
                         (plot_data$x - x_center) / x_sigma
@@ -301,7 +303,7 @@ plotdata_for_month <-
                         plot_data$vline
                 }else{
                     negative_x_max_data <-
-                        negative_x_data$x[negative_x_data[,x_field_name] == max(negative_x_data[,x_field_name])]    
+                        negative_x_data$x[negative_x_data[,x_field_name] == max(negative_x_data[,x_field_name])]
                     plot_data$x_negative_point <-
                         unique(negative_x_max_data)
                 }
@@ -317,8 +319,56 @@ plotdata_for_month <-
                     plot_data$y_negative_point <-
                         unique(negative_y_max_data)
                 }
-                
-                
+                x_quantile_values <- quantile(plot_data$x)
+                y_quantile_values <- quantile(plot_data$y)
+                print(x_quantile_values)
+                print(y_quantile_values)
+                plot_data$x_qval <- 1
+                plot_data$y_qval <- 1
+                if (dim(plot_data[(plot_data$x > x_quantile_values[2] &
+                                   plot_data$x <= x_quantile_values[3]),])[1] >
+                    0) {
+                    plot_data[(plot_data$x > x_quantile_values[2] &
+                                   plot_data$x <= x_quantile_values[3]),]$x_qval <-
+                        2
+                }
+                print("Step1")
+                if (dim(plot_data[(plot_data$x > x_quantile_values[3] &
+                                   plot_data$x <= x_quantile_values[4]),])[1] >
+                    0) {
+                    plot_data[(plot_data$x > x_quantile_values[3] &
+                                   plot_data$x <= x_quantile_values[4]),]$x_qval <-
+                        3
+                }
+                print("Step2")
+                if (dim(plot_data[(plot_data$x > x_quantile_values[4]),])[1] >
+                    0) {
+                    plot_data[(plot_data$x > x_quantile_values[4]),]$x_qval <-
+                        4
+                }
+                print("Step3")
+                if (dim(plot_data[(plot_data$y > y_quantile_values[2] &
+                                   plot_data$y <= y_quantile_values[3]),])[1] >
+                    0) {
+                    plot_data[(plot_data$y > y_quantile_values[2] &
+                                   plot_data$y <= y_quantile_values[3]),]$y_qval <-
+                        2
+                }
+                print("Step4")
+                if (dim(plot_data[(plot_data$y > y_quantile_values[3] &
+                                   plot_data$y <= y_quantile_values[4]),])[1] >
+                    0) {
+                    plot_data[(plot_data$y > y_quantile_values[3] &
+                                   plot_data$y <= y_quantile_values[4]),]$y_qval <-
+                        3
+                }
+                print("Step5")
+                if (dim(plot_data[(plot_data$y > y_quantile_values[4]),])[1] >
+                    0) {
+                    plot_data[(plot_data$y > y_quantile_values[4]),]$y_qval <-
+                        4
+                }
+                print("Step6")
             }
         } else{
             print("Too low")

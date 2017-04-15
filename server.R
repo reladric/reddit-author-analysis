@@ -33,15 +33,24 @@ shinyServer(function(input, output) {
     activity_data <- list_of_values[[2]]
     user_comments <- list_of_values[[3]]
     score_data <- list_of_values[[4]]
+    centering_values <- c("mean","median")
+    names(centering_values) <- c("Mean","Median")
+    feature_values <- c("avg","score")
+    names(feature_values) <-
+        c("Average Score per Post in the window","Raw score in the window")
+    window_values <- seq(1,(max(score_data$month) / 2))
+    names(window_values) <- window_values
+    scale_values <- c(TRUE,FALSE)
+    names(scale_values) <- c("Yes","No")
     #### Reacive init ----
     values <-
         reactiveValues(
             lastUpdated = "Aerik",
             selected_month = 100,
-            selected_window = 1,
-            selected_feature = "score",
+            selected_window = 10,
+            selected_feature = "avg",
             scale = TRUE,
-            center = "mean"
+            center = "median"
         )
     #### Tab 1 - User Analysis ----
     #### Tab 1 -  Quadrant selection for users  ----
@@ -216,25 +225,78 @@ shinyServer(function(input, output) {
         sliderInput(
             "monthSelector",
             label =  "Up to Month",
-            min = min(score_data$month) + values$selected_window,
+            min = min(score_data$month) + as.numeric(values$selected_window),
             max = max(score_data$month),
-            value = min(score_data$month)
+            value = values$selected_month
+        )
+    })
+    #### Tab 2 - Plot Controls input  ----
+    output$centering <- renderUI({
+        selectInput(
+            "centering",choices = centering_values, label = "Center",selected = centering_values[2]
+        )
+    })
+    
+    output$feature <- renderUI({
+        selectInput(
+            "feature",choices = feature_values, label = "Feature",selected = feature_values[1]
+        )
+    })
+    
+    output$window_size <- renderUI({
+        selectInput(
+            "window_size",choices = window_values, label = "Window Size",selected =
+                window_values[length(window_values) / 2]
+        )
+    })
+    
+    output$scale <- renderUI({
+        selectInput(
+            "scale",choices = scale_values, label = "Scale (Z-score)?",selected = scale_values[1]
         )
     })
     #### Tab 2 - Month slider monitor ----
     observeEvent(input$monthSelector, {
         values$selected_month <- input[["monthSelector"]]
     })
+    #### Tab 2 - Plot contrfols monitor ----
+    observeEvent(input$centering, {
+        values$center <- input[["centering"]]
+    })
+    observeEvent(input$feature, {
+        values$selected_feature <- input[["feature"]]
+    })
+    observeEvent(input$window_size, {
+        values$selected_window <- input[["window_size"]]
+    })
+    observeEvent(input$scale, {
+        values$scale <- input[["scale"]]
+    })
     #### Tab 2 - Quadrant Heatmap ----
     output$currentMonthHeatMap <- renderPlot({
-        karma_quadrant_counts = heatdata_for_month(values$selected_month, score_data)
+        plot_data <-
+            plotdata_for_month(
+                as.numeric(values$selected_month),
+                score_data,
+                values$selected_feature,
+                values$scale,
+                values$center,
+                as.numeric(values$selected_window)
+                
+            )
+        plot_data_table <- data.table(plot_data)
+        quadrant_counts <-
+            as.data.frame(plot_data_table[order(x_qval,y_qval),list(count = length(user)), by = list(x_qval, y_qval)])
+        quadrant_counts$ratio<-quadrant_counts$count/sum(quadrant_counts$count)
         plot <-
-            ggplot(data = karma_quadrant_counts, aes(x = `Feminism Score`, y = `Mens Right Score`)) +
-            geom_tile(aes(fill =  `# of users`))  +
+            ggplot(data = quadrant_counts, aes(x = `x_qval`, y = `y_qval`)) +
+            geom_tile(aes(fill =  `ratio`))  +
+            geom_hline(yintercept = 2.5)+
+            geom_vline(xintercept = 2.5)+
             scale_fill_gradient2(low = "blue",
                                  high = "darkgreen",
-                                 guide = "colorbar") +
-            geom_text(aes(label =  `labelField`)) +
+                                 guide = "colorbar")+
+        geom_text(aes(quadrant_counts =  `count`)) +
             ggtitle(
                 paste(
                     "Mensrights v Feminism - Zscore of average cumulative karma per comment (Month : ",
@@ -261,11 +323,12 @@ shinyServer(function(input, output) {
                 as.numeric(values$selected_window)
                 
             )
-        
+        # stat_density2d(aes(fill = ..density..), geom = "polygon") +
+        # scale_alpha_continuous(limits = c(0, .5), breaks = seq(0, .5, by = 0.1)) +
         plot <-
             ggplot(plot_data, aes(x = x, y = y)) +
-            stat_density2d(aes(fill = ..level..), geom = "polygon") +
-            scale_alpha_continuous(limits = c(0, .5), breaks = seq(0, .5, by = 0.1)) +
+            geom_point() +
+            stat_density2d(aes(color = ..level..)) +
             ggtitle(
                 paste(
                     "Mensrights v Feminism -",
@@ -293,48 +356,14 @@ shinyServer(function(input, output) {
         plot
     })
     #### Tab 2 -User details ----
-    # output$selected_user_details <-
-    #   renderText({
-    #     if (is.null(input$plot_click$x)) {
-    #       "Click on the plot"
-    #     } else{
-    #       y_reduced <- plotdata_for_month(values$selected_month, score_data)
-    #       previous_row_count <- nrow(y_reduced)
-    #       granularity <- 0.5
-    #       loopcount <- 0
-    #       while (TRUE) {
-    #         loopcount <- loopcount + 1
-    #         x_reduced <-
-    #           y_reduced[(
-    #             y_reduced$fem_z_score < input$plot_click$x + granularity &
-    #               y_reduced$fem_z_score > input$plot_click$x - granularity
-    #           ), ]
-    #         y_reduced <-
-    #           x_reduced[(
-    #             x_reduced$mr_z_score < input$plot_click$y + granularity &
-    #               x_reduced$mr_z_score > input$plot_click$y - granularity
-    #           ), ]
-    #         current_row_count <- nrow(y_reduced)
-    #         if (current_row_count < 1) {
-    #           granularity <- granularity + (granularity / 10)
-    #           #print("Increasing granularity")
-    #         }
-    #         else if (current_row_count > 1) {
-    #           granularity <- granularity - (granularity / 10)
-    #           #print("Reducing granularity")
-    #         } else{
-    #           print("Zeroed in")
-    #           break
-    #         }
-    #         if (loopcount > 100) {
-    #           y_reduced$user = "Unable to resolve user. Try again"
-    #           break
-    #         }
-    #         print(loopcount)
-    #         previous_row_count <- current_row_count
-    #       }
-    #       y_reduced$user
-    #     }
-    #   })
-    
+    output$selected_user_details <-
+        renderText({
+            paste(
+                paste("Window Size:", values$selected_window,sep = " "),
+                paste("Center:", values$center,sep = " "),
+                paste("Plotted feature:",values$selected_feature, sep = " "),
+                paste("Scaling enabled",values$scale , sep = " "),
+                sep = "\n"
+            )
+        })
 })
