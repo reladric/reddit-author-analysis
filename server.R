@@ -37,7 +37,7 @@ shinyServer(function(input, output) {
     names(centering_values) <- c("Mean","Median")
     feature_values <- c("avg","score")
     names(feature_values) <-
-        c("Average Score per Post in the window","Raw score in the window")
+        c("Score per Post in the window","Raw score in the window")
     window_values <- seq(1,(max(score_data$month) / 2))
     names(window_values) <- window_values
     scale_values <- c(TRUE,FALSE)
@@ -224,7 +224,7 @@ shinyServer(function(input, output) {
     output$monthSelector <- renderUI({
         sliderInput(
             "monthSelector",
-            label =  "Up to Month",
+            label =  "Month (Window End)",
             min = min(score_data$month) + as.numeric(values$selected_window),
             max = max(score_data$month),
             value = values$selected_month
@@ -267,10 +267,39 @@ shinyServer(function(input, output) {
         values$selected_feature <- input[["feature"]]
     })
     observeEvent(input$window_size, {
-        values$selected_window <- input[["window_size"]]
+        values$selected_window <- as.numeric(input[["window_size"]])
     })
     observeEvent(input$scale, {
         values$scale <- input[["scale"]]
+    })
+    #### Tab 2 Group Average of metric ----
+    output$groupAverage <- renderPlot({
+        monthly_averages <-
+            as.data.frame(t(
+                sapply(
+                    unique(score_data$month), group_average, complete_data = score_data, feature = values$selected_feature, window_size = values$selected_window
+                )
+            ))
+        colnames(monthly_averages) <- c("month","fem","mr")
+        plot <-
+            ggplot(data = monthly_averages, aes(month)) + geom_line(aes(y = fem, colour =
+                                                                            "feminism")) + geom_line(aes(y = mr, colour = "mensrights")) +
+            ggtitle(
+                paste(
+                    "Group Average of Feminism & Mensrights",
+                    values$selected_feature,
+                    "for window:",
+                    values$selected_window,
+                    sep = " "
+                )
+            ) +      theme(plot.title = element_text(
+                size = 15,
+                face = "bold",
+                hjust = 0.5
+            )) +
+            xlab("Month (Window end)") +
+            ylab("Group Average")
+        plot
     })
     #### Tab 2 - Quadrant Heatmap ----
     output$currentMonthHeatMap <- renderPlot({
@@ -287,28 +316,33 @@ shinyServer(function(input, output) {
         plot_data_table <- data.table(plot_data)
         quadrant_counts <-
             as.data.frame(plot_data_table[order(x_qval,y_qval),list(count = length(user)), by = list(x_qval, y_qval)])
-        quadrant_counts$ratio<-quadrant_counts$count/sum(quadrant_counts$count)
+        quadrant_counts$ratio <-
+            quadrant_counts$count / sum(quadrant_counts$count)
         plot <-
             ggplot(data = quadrant_counts, aes(x = `x_qval`, y = `y_qval`)) +
             geom_tile(aes(fill =  `ratio`))  +
-            geom_hline(yintercept = 2.5)+
-            geom_vline(xintercept = 2.5)+
+            geom_hline(yintercept = 2.5) +
+            geom_vline(xintercept = 2.5) +
             scale_fill_gradient2(low = "blue",
                                  high = "darkgreen",
-                                 guide = "colorbar")+
-        geom_text(aes(quadrant_counts =  `count`)) +
+                                 guide = "colorbar") +
+            geom_text(aes(label =  round(`ratio`,3))) +
             ggtitle(
                 paste(
-                    "Mensrights v Feminism - Zscore of average cumulative karma per comment (Month : ",
+                    "Mensrights v Feminism - Quantiles of",values$selected_feature,"density heat tiles for ",
                     values$selected_month,
-                    ")",
+                    "(Window size : ",values$selected_window,")",
                     sep = " "
                 )
             ) +      theme(plot.title = element_text(
                 size = 15,
                 face = "bold",
                 hjust = 0.5
-            ))
+            )) +
+            xlab("Feminism Quantile") +
+            ylab("MensRights Quantile")
+        #             ))          +  scale_x_discrete(labels = quantile(plot_data$x)[2:5]) +
+        #             scale_y_discrete(labels = quantile(plot_data$x)[2:5])
         plot
     })
     #### Tab 2 - Gradient scatter plot ----
@@ -327,13 +361,12 @@ shinyServer(function(input, output) {
         # scale_alpha_continuous(limits = c(0, .5), breaks = seq(0, .5, by = 0.1)) +
         plot <-
             ggplot(plot_data, aes(x = x, y = y)) +
-            geom_point() +
             stat_density2d(aes(color = ..level..)) +
             ggtitle(
                 paste(
-                    "Mensrights v Feminism -",
-                    values$feature,
-                    "score for",
+                    "Mensrights v Feminism - Density plot for ",
+                    values$selected_feature,
+                    "(scale:",values$scale,") for",
                     values$selected_month,
                     "(sliding window:",
                     values$selected_window,
@@ -348,15 +381,15 @@ shinyServer(function(input, output) {
             geom_vline(xintercept = unique(plot_data$vline)) +
             geom_hline(yintercept = unique(plot_data$hline)) +
             geom_vline(xintercept = unique(plot_data$y_negative_point), col =
-                           "red") +
+                           "red", show.legend = TRUE) +
             geom_hline(yintercept = unique(plot_data$x_negative_point), col =
-                           "red") +
-            xlab(paste("Feminism", values$feature, sep = " ")) +
-            ylab(paste("MensRights", values$feature, sep = " "))
+                           "red", show.legend = TRUE) +
+            xlab(paste("Feminism", values$selected_feature, sep = " ")) +
+            ylab(paste("MensRights", values$selected_feature, sep = " ")) 
         plot
     })
     #### Tab 2 -User details ----
-    output$selected_user_details <-
+    output$vectorField <-
         renderText({
             paste(
                 paste("Window Size:", values$selected_window,sep = " "),

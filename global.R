@@ -2,6 +2,7 @@ library(shiny)
 library(ggplot2)
 library(scales)
 library(data.table)
+library(gridExtra)
 file_loaded <- 0
 #### Load data from csvs ----
 compute_data <-
@@ -211,20 +212,9 @@ heatdata_for_month <- function(x, complete_data) {
                                                     heat_data$`Mens Right Score` == "-")], sep = ": ")
     return (heat_data)
 }
-
-#### Generate Scatter Plot data given month ----
-plotdata_for_month <-
-    function(x,
-             complete_data,
-             feature = "avg",
-             scale = TRUE,
-             center = "median",
-             window_size = 6) {
-        # Window start and end
-        print(scale)
-        print(feature)
-        print(center)
-        print(window_size)
+#### Obtain aggregated window data ----
+get_window_data <-
+    function(x,  complete_data,feature, window_size) {
         if (x >= window_size) {
             w_start <-  x - window_size
             w_end <-  x
@@ -268,107 +258,30 @@ plotdata_for_month <-
                 plot_data$x <-
                     plot_data[[x_field_name]]
                 plot_data$y <- plot_data[[y_field_name]]
-                if (center == "mean") {
-                    x_center <- mean(plot_data$x)
-                    y_center <- mean(plot_data$y)
-                }
-                else{
-                    x_center <- median(plot_data$x)
-                    y_center <- median(plot_data$y)
-                }
-                if (scale) {
-                    x_sigma <- sd(plot_data$x)
-                    plot_data$x <-
-                        (plot_data$x - x_center) / x_sigma
-                    y_center <- mean(plot_data$y)
-                    y_sigma <- sd(plot_data$y)
-                    plot_data$y <-
-                        (plot_data$y - y_center) / y_sigma
-                }
-                plot_data$month_number <- x
-                if (center == "mean") {
-                    plot_data$hline <- mean(plot_data$x)
-                    plot_data$vline <- mean(plot_data$y)
-                }
-                else{
-                    plot_data$hline <- median(plot_data$x)
-                    plot_data$vline <- median(plot_data$y)
-                }
-                
-                negative_x_data <-
-                    plot_data[plot_data[,x_field_name] < 0,]
-                if (is.null(dim(negative_x_data)) ||
-                    dim(negative_x_data)[1] == 0) {
-                    plot_data$x_negative_point <-
-                        plot_data$vline
-                }else{
-                    negative_x_max_data <-
-                        negative_x_data$x[negative_x_data[,x_field_name] == max(negative_x_data[,x_field_name])]
-                    plot_data$x_negative_point <-
-                        unique(negative_x_max_data)
-                }
-                negative_y_data <-
-                    plot_data[plot_data[,y_field_name] < 0,]
-                if (is.null(dim(negative_y_data)) ||
-                    dim(negative_y_data)[1] == 0) {
-                    plot_data$y_negative_point <-
-                        plot_data$hline
-                }else{
-                    negative_y_max_data <-
-                        negative_y_data$y[negative_y_data[,y_field_name] == max(negative_y_data[,y_field_name])]
-                    plot_data$y_negative_point <-
-                        unique(negative_y_max_data)
-                }
-                x_quantile_values <- quantile(plot_data$x)
-                y_quantile_values <- quantile(plot_data$y)
-                print(x_quantile_values)
-                print(y_quantile_values)
-                plot_data$x_qval <- 1
-                plot_data$y_qval <- 1
-                if (dim(plot_data[(plot_data$x > x_quantile_values[2] &
-                                   plot_data$x <= x_quantile_values[3]),])[1] >
-                    0) {
-                    plot_data[(plot_data$x > x_quantile_values[2] &
-                                   plot_data$x <= x_quantile_values[3]),]$x_qval <-
-                        2
-                }
-                print("Step1")
-                if (dim(plot_data[(plot_data$x > x_quantile_values[3] &
-                                   plot_data$x <= x_quantile_values[4]),])[1] >
-                    0) {
-                    plot_data[(plot_data$x > x_quantile_values[3] &
-                                   plot_data$x <= x_quantile_values[4]),]$x_qval <-
-                        3
-                }
-                print("Step2")
-                if (dim(plot_data[(plot_data$x > x_quantile_values[4]),])[1] >
-                    0) {
-                    plot_data[(plot_data$x > x_quantile_values[4]),]$x_qval <-
-                        4
-                }
-                print("Step3")
-                if (dim(plot_data[(plot_data$y > y_quantile_values[2] &
-                                   plot_data$y <= y_quantile_values[3]),])[1] >
-                    0) {
-                    plot_data[(plot_data$y > y_quantile_values[2] &
-                                   plot_data$y <= y_quantile_values[3]),]$y_qval <-
-                        2
-                }
-                print("Step4")
-                if (dim(plot_data[(plot_data$y > y_quantile_values[3] &
-                                   plot_data$y <= y_quantile_values[4]),])[1] >
-                    0) {
-                    plot_data[(plot_data$y > y_quantile_values[3] &
-                                   plot_data$y <= y_quantile_values[4]),]$y_qval <-
-                        3
-                }
-                print("Step5")
-                if (dim(plot_data[(plot_data$y > y_quantile_values[4]),])[1] >
-                    0) {
-                    plot_data[(plot_data$y > y_quantile_values[4]),]$y_qval <-
-                        4
-                }
-                print("Step6")
+            }
+            negative_x_data <-
+                plot_data[plot_data[,x_field_name] < 0,]
+            if (is.null(dim(negative_x_data)) ||
+                dim(negative_x_data)[1] == 0) {
+                plot_data$x_negative_point <-
+                    plot_data$vline
+            }else{
+                negative_x_max_data <-
+                    negative_x_data$x[negative_x_data[,x_field_name] == max(negative_x_data[,x_field_name])]
+                plot_data$x_negative_point <-
+                    unique(negative_x_max_data)
+            }
+            negative_y_data <-
+                plot_data[plot_data[,y_field_name] < 0,]
+            if (is.null(dim(negative_y_data)) ||
+                dim(negative_y_data)[1] == 0) {
+                plot_data$y_negative_point <-
+                    plot_data$hline
+            }else{
+                negative_y_max_data <-
+                    negative_y_data$y[negative_y_data[,y_field_name] == max(negative_y_data[,y_field_name])]
+                plot_data$y_negative_point <-
+                    unique(negative_y_max_data)
             }
         } else{
             print("Too low")
@@ -376,5 +289,118 @@ plotdata_for_month <-
                                    y = numeric(0),
                                    month_number = numeric(0))
         }
+        
+        return(plot_data)
+        
+    }
+#### Generate Scatter Plot data given month ----
+plotdata_for_month <-
+    function(x,
+             complete_data,
+             feature = "avg",
+             scale = TRUE,
+             center = "median",
+             window_size = 6) {
+        # Window start and end
+        print(scale)
+        print(feature)
+        print(center)
+        print(window_size)
+        plot_data <-
+            get_window_data(x,  complete_data,feature, window_size)
+        if (center == "mean") {
+            x_center <- mean(plot_data$x)
+            y_center <- mean(plot_data$y)
+        }
+        else{
+            x_center <- median(plot_data$x)
+            y_center <- median(plot_data$y)
+        }
+        
+        if (scale) {
+            x_sigma <- sd(plot_data$x)
+            plot_data$x <-
+                (plot_data$x - x_center) / x_sigma
+            y_center <- mean(plot_data$y)
+            y_sigma <- sd(plot_data$y)
+            plot_data$y <-
+                (plot_data$y - y_center) / y_sigma
+        }
+        
+        if (center == "mean") {
+            plot_data$hline <- mean(plot_data$x)
+            plot_data$vline <- mean(plot_data$y)
+        }
+        else{
+            plot_data$hline <- median(plot_data$x)
+            plot_data$vline <- median(plot_data$y)
+        }
+        
+        
+        x_quantile_values <- quantile(plot_data$x)
+        y_quantile_values <- quantile(plot_data$y)
+        print(x_quantile_values)
+        print(y_quantile_values)
+        plot_data$month_number <- x
+        plot_data$x_qval <- 1
+        plot_data$y_qval <- 1
+        if (dim(plot_data[(plot_data$x > x_quantile_values[2] &
+                           plot_data$x <= x_quantile_values[3]),])[1] >
+            0) {
+            plot_data[(plot_data$x > x_quantile_values[2] &
+                           plot_data$x <= x_quantile_values[3]),]$x_qval <-
+                2
+        }
+        print("Step1")
+        if (dim(plot_data[(plot_data$x > x_quantile_values[3] &
+                           plot_data$x <= x_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$x > x_quantile_values[3] &
+                           plot_data$x <= x_quantile_values[4]),]$x_qval <-
+                3
+        }
+        print("Step2")
+        if (dim(plot_data[(plot_data$x > x_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$x > x_quantile_values[4]),]$x_qval <-
+                4
+        }
+        print("Step3")
+        if (dim(plot_data[(plot_data$y > y_quantile_values[2] &
+                           plot_data$y <= y_quantile_values[3]),])[1] >
+            0) {
+            plot_data[(plot_data$y > y_quantile_values[2] &
+                           plot_data$y <= y_quantile_values[3]),]$y_qval <-
+                2
+        }
+        print("Step4")
+        if (dim(plot_data[(plot_data$y > y_quantile_values[3] &
+                           plot_data$y <= y_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$y > y_quantile_values[3] &
+                           plot_data$y <= y_quantile_values[4]),]$y_qval <-
+                3
+        }
+        print("Step5")
+        if (dim(plot_data[(plot_data$y > y_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$y > y_quantile_values[4]),]$y_qval <-
+                4
+        }
+        print("Step6")
+        
+        
         return (plot_data)
+    }
+#### Get group average of selected feature ----
+group_average <-
+    function(x,
+             complete_data,
+             feature = "avg",
+             window_size = 6) {
+        window_data <-
+            get_window_data(
+                x = x, complete_data = complete_data , feature = feature,window_size = window_size
+            )
+        return (c(x,mean(window_data$x), mean(window_data$y)))
     }
