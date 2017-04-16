@@ -295,103 +295,77 @@ get_window_data <-
     }
 #### Generate Scatter Plot data given month ----
 plotdata_for_month <-
-    function(x,
-             complete_data,
-             feature = "avg",
-             scale = TRUE,
-             center = "median",
-             window_size = 6) {
-        # Window start and end
-        print(scale)
-        print(feature)
-        print(center)
-        print(window_size)
-        plot_data <-
-            get_window_data(x,  complete_data,feature, window_size)
-        if (center == "mean") {
-            x_center <- mean(plot_data$x)
-            y_center <- mean(plot_data$y)
-        }
-        else{
-            x_center <- median(plot_data$x)
-            y_center <- median(plot_data$y)
-        }
-        
-        if (scale) {
-            x_sigma <- sd(plot_data$x)
-            plot_data$x <-
-                (plot_data$x - x_center) / x_sigma
-            y_center <- mean(plot_data$y)
-            y_sigma <- sd(plot_data$y)
-            plot_data$y <-
-                (plot_data$y - y_center) / y_sigma
-        }
-        
-        if (center == "mean") {
-            plot_data$hline <- mean(plot_data$x)
-            plot_data$vline <- mean(plot_data$y)
-        }
-        else{
-            plot_data$hline <- median(plot_data$x)
-            plot_data$vline <- median(plot_data$y)
-        }
-        
-        
-        x_quantile_values <- quantile(plot_data$x)
-        y_quantile_values <- quantile(plot_data$y)
-        print(x_quantile_values)
-        print(y_quantile_values)
-        plot_data$month_number <- x
-        plot_data$x_qval <- 1
-        plot_data$y_qval <- 1
-        if (dim(plot_data[(plot_data$x > x_quantile_values[2] &
-                           plot_data$x <= x_quantile_values[3]),])[1] >
-            0) {
-            plot_data[(plot_data$x > x_quantile_values[2] &
-                           plot_data$x <= x_quantile_values[3]),]$x_qval <-
-                2
-        }
-        print("Step1")
-        if (dim(plot_data[(plot_data$x > x_quantile_values[3] &
-                           plot_data$x <= x_quantile_values[4]),])[1] >
-            0) {
-            plot_data[(plot_data$x > x_quantile_values[3] &
-                           plot_data$x <= x_quantile_values[4]),]$x_qval <-
-                3
-        }
-        print("Step2")
-        if (dim(plot_data[(plot_data$x > x_quantile_values[4]),])[1] >
-            0) {
-            plot_data[(plot_data$x > x_quantile_values[4]),]$x_qval <-
-                4
-        }
-        print("Step3")
-        if (dim(plot_data[(plot_data$y > y_quantile_values[2] &
-                           plot_data$y <= y_quantile_values[3]),])[1] >
-            0) {
-            plot_data[(plot_data$y > y_quantile_values[2] &
-                           plot_data$y <= y_quantile_values[3]),]$y_qval <-
-                2
-        }
-        print("Step4")
-        if (dim(plot_data[(plot_data$y > y_quantile_values[3] &
-                           plot_data$y <= y_quantile_values[4]),])[1] >
-            0) {
-            plot_data[(plot_data$y > y_quantile_values[3] &
-                           plot_data$y <= y_quantile_values[4]),]$y_qval <-
-                3
-        }
-        print("Step5")
-        if (dim(plot_data[(plot_data$y > y_quantile_values[4]),])[1] >
-            0) {
-            plot_data[(plot_data$y > y_quantile_values[4]),]$y_qval <-
-                4
-        }
-        print("Step6")
-        
-        
-        return (plot_data)
+  function(x,
+           complete_data,
+           feature = "avg",
+           scale = TRUE,
+           center = "median",
+           window_size = 6) {
+    # Window start and end
+    plot_data <-
+      get_window_data(x,  complete_data, feature, window_size)
+    if (center == "mean") {
+      x_center <- mean(plot_data$x)
+      y_center <- mean(plot_data$y)
     }
+    else{
+      x_center <- median(plot_data$x)
+      y_center <- median(plot_data$y)
+    }
+    
+    if (scale) {
+      x_sigma <- sd(plot_data$x)
+      plot_data$x <-
+        (plot_data$x - x_center) / x_sigma
+      y_center <- mean(plot_data$y)
+      y_sigma <- sd(plot_data$y)
+      plot_data$y <-
+        (plot_data$y - y_center) / y_sigma
+    }
+    
+    if (center == "mean") {
+      plot_data$hline <- mean(plot_data$x)
+      plot_data$vline <- mean(plot_data$y)
+    }
+    else{
+      plot_data$hline <- median(plot_data$x)
+      plot_data$vline <- median(plot_data$y)
+    }
+    
+    
+    x_quantile_values <- quantile(plot_data$x)
+    y_quantile_values <- quantile(plot_data$y)
+    plot_data$month_number <- x
+    plot_data$x_qval <- 4
+    plot_data$y_qval <- 4
+    if (dim(plot_data[(plot_data$x <= x_quantile_values[4]), ])[1] >
+        0) {
+      plot_data[(plot_data$x <= x_quantile_values[4]), ]$x_qval <- 3
+    }
+    if (dim(plot_data[(plot_data$x < x_quantile_values[3]), ])[1] >
+        0) {
+      plot_data[(plot_data$x <= x_quantile_values[3]), ]$x_qval <- 2
+    }
+    if (dim(plot_data[(plot_data$x < x_quantile_values[2]), ])[1] >
+        0) {
+      plot_data[(plot_data$x < x_quantile_values[2]), ]$x_qval <- 1
+    }
+    
+    if (dim(plot_data[(plot_data$y <= y_quantile_values[4]), ])[1] >
+        0) {
+      plot_data[(plot_data$y <= y_quantile_values[4]), ]$y_qval <- 3
+    }
+    if (dim(plot_data[(plot_data$y < y_quantile_values[3]), ])[1] >
+        0) {
+      plot_data[(plot_data$y <= y_quantile_values[3]), ]$y_qval <- 2
+    }
+    if (dim(plot_data[(plot_data$y < y_quantile_values[2]), ])[1] >
+        0) {
+      plot_data[(plot_data$y < y_quantile_values[2]), ]$y_qval <- 1
+    }
+    
+    return (plot_data)
+  }
 #### Get group average of selected feature ----
 group_average <-
     function(x,
