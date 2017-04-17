@@ -463,7 +463,7 @@ shinyServer(function(input, output) {
       geom_density2d(aes(color = ..level..)) +
       ggtitle(
         paste(
-          "Mensrights v Feminism - Density heat tiles of",
+          "Mensrights v Feminism - Density contour map",
           values$selected_feature,
           "for ",
           values$selected_month,

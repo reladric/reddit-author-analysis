@@ -102,8 +102,8 @@ shinyUI(fluidPage(# Application title
       tabPanel(
         "Karma Analysis",
         fluidRow(fluidRow(
-          column(6, wellPanel(uiOutput("feature"))),
-          column(6, wellPanel(uiOutput("window_size")))
+          column(6, wellPanel(uiOutput("window_size"))),
+          column(6, wellPanel(uiOutput("feature")))
         )),
         fluidRow(column(12, wellPanel(
           plotOutput("groupAverage")
@@ -121,6 +121,11 @@ shinyUI(fluidPage(# Application title
         )), column(6, wellPanel(
           plotOutput("currentMonthPlot", width = "100%")
         ))),
+        fluidRow(style = "border:0px;padding:0px",
+          column(4, wellPanel(h6("Click on quantile box below to explore"))),
+          column(4, wellPanel()),
+          column(4, wellPanel(h6("Click on quantile box below to explore")))
+        ),
         fluidRow(style = "border:0px;padding:0px",
           column(4, wellPanel(plotOutput("firstVectorField", click = "firstVectorclick"))),
           column(4, wellPanel(plotOutput("currentMonthHeatMap_1"))),
