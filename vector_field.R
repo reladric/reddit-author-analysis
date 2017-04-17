@@ -1,4 +1,5 @@
 source("global.R")
+score_data<-compute_data()[[4]]
 first_month_data <-
     plotdata_for_month(
         x = 100, complete_data = score_data, feature = "avg",scale = TRUE, window_size = 5

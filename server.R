@@ -552,11 +552,11 @@ shinyServer(function(input, output) {
       
       base_month_data <- current_month_data()[, c(1, 16, 17)]
       colnames(base_month_data) <-
-        c("user", "right_xqval", "right_yqval")
+        c("user", "current_xqval", "current_yqval")
       
       previous_month_data <- second_month_data[, c(1, 16, 17)]
       colnames(previous_month_data) <-
-        c("user", "left_xqval", "left_yqval")
+        c("user", "previous_xqval", "previous_yqval")
       
       common_rows <-
         merge(base_month_data, previous_month_data, by =
@@ -564,22 +564,26 @@ shinyServer(function(input, output) {
       common_rows_table <- data.table(common_rows)
       
       common_rows_agg <-
-        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(left_xqval, left_yqval, right_xqval, right_yqval)])
+        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(current_xqval,
+                                                                                 current_yqval,
+                                                                                 previous_xqval,
+                                                                                 previous_yqval)])
       
       quiver_plot_data <-
         common_rows_agg[(
-          common_rows_agg$left_xqval == values$firstVector_x_quantile &
-            common_rows_agg$left_yqval == values$firstVector_y_quantile
+          common_rows_agg$current_xqval == values$firstVector_x_quantile &
+            common_rows_agg$current_yqval == values$firstVector_y_quantile
         ),]
-      ratio <- .25 / (256 / 5)
+      print(class(quiver_plot_data))
+      print(dim(quiver_plot_data))
       ggplot(data = quiver_plot_data,
-             aes(x = left_xqval , y = left_yqval + 0.25)) +
-        geom_segment(aes(xend = right_xqval , yend = right_yqval - 0.25),
+             aes(x = previous_xqval , y = previous_yqval + 0.25)) +
+        geom_segment(aes(xend = current_xqval , yend = current_yqval - 0.25),
                      arrow = arrow(length = unit(0.3, "cm"))) +
         geom_text(data = quiver_plot_data,
                   aes(
-                    x = right_xqval - 0.15  ,
-                    y = (right_yqval - 0.3),
+                    x = previous_xqval - 0.15  ,
+                    y = (previous_yqval + 0.3),
                     label = count
                   )) +
         geom_hline(yintercept = 2.5, col = "red") +
@@ -597,11 +601,15 @@ shinyServer(function(input, output) {
         theme(aspect.ratio = 1) + xlab("Feminism Quantile") +
         ylab("MensRights Quantile") +
         ggtitle("Quantile Movement from 1 Month ago to current month (right)") +
-        theme(plot.title = element_text(
-          size = 12,
-          face = "bold",
-          hjust = 0.5
-        ),panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+        theme(
+          plot.title = element_text(
+            size = 12,
+            face = "bold",
+            hjust = 0.5
+          ),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()
+        )
     })
   #### Tab 2 Vector Field - Two Month ago ----
   output$secondVectorField <-
@@ -618,12 +626,12 @@ shinyServer(function(input, output) {
       
       base_month_data <- current_month_data()[, c(1, 16, 17)]
       colnames(base_month_data) <-
-        c("user", "right_xqval", "right_yqval")
+        c("user", "current_xqval", "current_yqval")
       
       
       previous_month_data <- second_month_data[, c(1, 16, 17)]
       colnames(previous_month_data) <-
-        c("user", "left_xqval", "left_yqval")
+        c("user", "past_xqval", "past_yqval")
       
       
       common_rows <-
@@ -632,22 +640,22 @@ shinyServer(function(input, output) {
       common_rows_table <- data.table(common_rows)
       
       common_rows_agg <-
-        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(left_xqval, left_yqval, right_xqval, right_yqval)])
+        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(current_xqval, current_yqval, past_xqval, past_yqval)])
       
       quiver_plot_data <-
         common_rows_agg[(
-          common_rows_agg$left_xqval == values$secondVector_x_quantile &
-            common_rows_agg$left_yqval == values$secondVector_y_quantile
+          common_rows_agg$current_xqval == values$secondVector_x_quantile &
+            common_rows_agg$current_yqval == values$secondVector_y_quantile
         ),]
       ratio <- .25 / (256 / 5)
       ggplot(data = quiver_plot_data,
-             aes(x = left_xqval , y = left_yqval + 0.25)) +
-        geom_segment(aes(xend = right_xqval , yend = right_yqval - 0.25),
+             aes(x = past_xqval , y = past_yqval + 0.25)) +
+        geom_segment(aes(xend = current_xqval , yend = current_yqval - 0.25),
                      arrow = arrow(length = unit(0.3, "cm"))) +
         geom_text(data = quiver_plot_data,
                   aes(
-                    x = right_xqval - 0.15  ,
-                    y = (right_yqval - 0.3),
+                    x = past_xqval - 0.15  ,
+                    y = (past_yqval + 0.3),
                     label = count
                   )) +
         geom_hline(yintercept = 2.5, col = "red") +
@@ -664,11 +672,15 @@ shinyServer(function(input, output) {
         ylim(c(0.5, 4.5)) +
         theme(aspect.ratio = 1) + xlab("Feminism Quantile") +
         ylab("MensRights Quantile") +
-        ggtitle("Quantile Movement from 2 Month ago to current month (right)") +      theme(plot.title = element_text(
-          size = 12,
-          face = "bold",
-          hjust = 0.5
-        ),panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+        ggtitle("Quantile Movement from 2 Month ago to current month (right)") +      theme(
+          plot.title = element_text(
+            size = 12,
+            face = "bold",
+            hjust = 0.5
+          ),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()
+        )
     })
   #### Tab 2 Vector Field - One Month forward ----
   output$firstForwardField <-
@@ -686,11 +698,11 @@ shinyServer(function(input, output) {
       base_month_data <- current_month_data()[, c(1, 16, 17)]
       print(dim(base_month_data))
       colnames(base_month_data) <-
-        c("user", "left_xqval", "left_yqval")
+        c("user", "current_xqval", "current_yqval")
       
       previous_month_data <- second_month_data[, c(1, 16, 17)]
       colnames(previous_month_data) <-
-        c("user", "right_xqval", "right_yqval")
+        c("user", "next_xqval", "next_yqval")
       
       common_rows <-
         merge(base_month_data, previous_month_data, by =
@@ -698,21 +710,21 @@ shinyServer(function(input, output) {
       common_rows_table <- data.table(common_rows)
       
       common_rows_agg <-
-        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(left_xqval, left_yqval, right_xqval, right_yqval)])
+        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(current_xqval, current_yqval, next_xqval, next_yqval)])
       
       quiver_plot_data <-
         common_rows_agg[(
-          common_rows_agg$left_xqval == values$firstForward_x_quantile &
-            common_rows_agg$left_yqval == values$firstForward_y_quantile
+          common_rows_agg$current_xqval == values$firstForward_x_quantile &
+            common_rows_agg$current_yqval == values$firstForward_y_quantile
         ),]
       ggplot(data = quiver_plot_data,
-             aes(x = left_xqval , y = left_yqval + 0.25)) +
-        geom_segment(aes(xend = right_xqval , yend = right_yqval - 0.25),
+             aes(x = current_xqval , y = current_yqval + 0.25)) +
+        geom_segment(aes(xend = next_xqval , yend = next_yqval - 0.25),
                      arrow = arrow(length = unit(0.3, "cm"))) +
         geom_text(data = quiver_plot_data,
                   aes(
-                    x = right_xqval - 0.15  ,
-                    y = (right_yqval - 0.3),
+                    x = next_xqval - 0.15  ,
+                    y = (next_yqval - 0.3),
                     label = count
                   )) +
         geom_hline(yintercept = 2.5, col = "red") +
@@ -730,11 +742,15 @@ shinyServer(function(input, output) {
         theme(aspect.ratio = 1) + xlab("Feminism Quantile") +
         ylab("MensRights Quantile") +
         ggtitle("Quantile Movement from current month(left) to next month") +
-        theme(plot.title = element_text(
-          size = 12,
-          face = "bold",
-          hjust = 0.5
-        ),panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+        theme(
+          plot.title = element_text(
+            size = 12,
+            face = "bold",
+            hjust = 0.5
+          ),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()
+        )
     })
   #### Tab 2 Vector Field - Two Month forward ----
   output$secondForwardField <-
@@ -751,11 +767,11 @@ shinyServer(function(input, output) {
       
       base_month_data <- current_month_data()[, c(1, 16, 17)]
       colnames(base_month_data) <-
-        c("user", "left_xqval", "left_yqval")
+        c("user", "current_xqval", "current_yqval")
       
       previous_month_data <- second_month_data[, c(1, 16, 17)]
       colnames(previous_month_data) <-
-        c("user", "right_xqval", "right_yqval")
+        c("user", "future_xqval", "future_yqval")
       
       common_rows <-
         merge(base_month_data, previous_month_data, by =
@@ -763,22 +779,22 @@ shinyServer(function(input, output) {
       common_rows_table <- data.table(common_rows)
       
       common_rows_agg <-
-        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(left_xqval, left_yqval, right_xqval, right_yqval)])
+        as.data.frame(common_rows_table[, list(count  = length(user)), by = list(current_xqval, current_yqval, future_xqval, future_yqval)])
       
       quiver_plot_data <-
         common_rows_agg[(
-          common_rows_agg$left_xqval == values$secondForward_x_quantile &
-            common_rows_agg$left_yqval == values$secondForward_y_quantile
+          common_rows_agg$current_xqval == values$secondForward_x_quantile &
+            common_rows_agg$current_yqval == values$secondForward_y_quantile
         ),]
       
       ggplot(data = quiver_plot_data,
-             aes(x = left_xqval , y = left_yqval + 0.25)) +
-        geom_segment(aes(xend = right_xqval , yend = right_yqval - 0.25),
+             aes(x = current_xqval , y = current_yqval + 0.25)) +
+        geom_segment(aes(xend = future_xqval   , yend = future_yqval - 0.25),
                      arrow = arrow(length = unit(0.3, "cm"))) +
         geom_text(data = quiver_plot_data,
                   aes(
-                    x = right_xqval - 0.15  ,
-                    y = (right_yqval - 0.3),
+                    x = future_xqval - 0.15  ,
+                    y = (future_yqval - 0.3),
                     label = count
                   )) +
         geom_hline(yintercept = 2.5, col = "red") +
@@ -796,11 +812,14 @@ shinyServer(function(input, output) {
         theme(aspect.ratio = 1) + xlab("Feminism Quantile") +
         ylab("MensRights Quantile") +
         ggtitle("Quantile Movement from current month(left) to 2 months forward") +
-        theme(plot.title = element_text(
-          size = 12,
-          face = "bold",
-          hjust = 0.5
-        ),panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+        theme(
+          plot.title = element_text(
+            size = 12,
+            face = "bold",
+            hjust = 0.5
+          ),
+          panel.grid.major = element_blank(),
+          panel.grid.minor = element_blank()
+        )
     })
-  
 })
