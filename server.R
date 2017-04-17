@@ -51,14 +51,14 @@ shinyServer(function(input, output) {
       selected_feature = "avg",
       scale = TRUE,
       center = "median",
-      firstVector_x_quantile = -1,
-      firstVector_y_quantile = -1,
-      secondVector_x_quantile = -1,
-      secondVector_y_quantile = -1,
-      firstForward_x_quantile = -1,
-      firstForward_y_quantile = -1,
-      secondForward_x_quantile = -1,
-      secondForward_y_quantile = -1
+      firstVector_x_quantile = 1,
+      firstVector_y_quantile = 1,
+      secondVector_x_quantile = 1,
+      secondVector_y_quantile = 1,
+      firstForward_x_quantile = 1,
+      firstForward_y_quantile = 1,
+      secondForward_x_quantile = 1,
+      secondForward_y_quantile = 1
     )
   #### Tab 1 - User Analysis ----
   #### Tab 1 -  Quadrant selection for users  ----
