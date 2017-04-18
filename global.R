@@ -16,7 +16,7 @@ compute_data <-
                       sep = ",",
                       header = TRUE)
         if (is.function(updateProgress)) {
-            text <- "1/5"
+            text <- "1/6"
             updateProgress(detail = text)
         }
         colnames(user_statistics) <-
@@ -40,7 +40,7 @@ compute_data <-
         user_statistics$`Total Comment Karma (Score` <-
             as.numeric(levels(user_statistics$`Total Comment Karma (Score`))[user_statistics$`Total Comment Karma (Score`]
         if (is.function(updateProgress)) {
-            text <- "2/5"
+            text <- "2/6"
             updateProgress(detail = text)
         }
         activity_data <-
@@ -48,13 +48,13 @@ compute_data <-
                       sep = ",",
                       header = TRUE)
         if (is.function(updateProgress)) {
-            text <- "3/5"
+            text <- "3/8"
             updateProgress(detail = text)
         }
         activity_data$ratio <-
             round(as.numeric(levels(activity_data$ratio))[activity_data$ratio], 2)
         if (is.function(updateProgress)) {
-            text <- "4/5"
+            text <- "4/6"
             updateProgress(detail = text)
         }
         user_comments <-
@@ -67,7 +67,7 @@ compute_data <-
                 fileEncoding = "UTF-8"
             )
         if (is.function(updateProgress)) {
-            text <- "5/5"
+            text <- "5/6"
             updateProgress(detail = text)
         }
         score_data <-
@@ -91,7 +91,10 @@ compute_data <-
         score_data$cumPostsFem <- as.numeric(score_data$cumPostsFem)
         score_data$karmaFem <- as.numeric(score_data$karmaFem)
         score_data$cumKarmaFem <- as.numeric(score_data$cumKarmaFem)
-        
+        if (is.function(updateProgress)) {
+            text <- "6/6"
+            updateProgress(detail = text)
+        }
         
         
         return (list(user_statistics,
@@ -214,7 +217,7 @@ heatdata_for_month <- function(x, complete_data) {
 }
 #### Obtain aggregated window data ----
 get_window_data <-
-    function(x,  complete_data,feature, window_size, threshold = 2) {
+    function(x,  complete_data,feature, window_size, threshold ) {
         if (x >= window_size) {
             w_start <-  x - window_size
             w_end <-  x
@@ -304,7 +307,7 @@ plotdata_for_month <-
              scale = TRUE,
              center = "median",
              window_size = 6,
-             threshold = 2) {
+             threshold) {
         # Window start and end
         plot_data <-
             get_window_data(x,  complete_data, feature, window_size, threshold)
@@ -328,12 +331,12 @@ plotdata_for_month <-
         }
         
         if (center == "mean") {
-            plot_data$hline <- mean(plot_data$x)
-            plot_data$vline <- mean(plot_data$y)
+            plot_data$hline <- mean(plot_data$y)
+            plot_data$vline <- mean(plot_data$x)
         }
         else{
-            plot_data$hline <- median(plot_data$x)
-            plot_data$vline <- median(plot_data$y)
+            plot_data$hline <- median(plot_data$y)
+            plot_data$vline <- median(plot_data$x)
         }
         
         
@@ -392,13 +395,13 @@ plotdata_for_month <-
             plot_data[(plot_data$y <= y_quantile_values[2]),]$y_qval <- 1
         }
         
-        print(x_quantile_values)
+
         xpercentile <- ecdf(plot_data$x)
-        plot_data$neg_x_qval <-
-            xpercentile(unique(plot_data$x_negative_point)) * 4
+        plot_data$neg_x_qval <-(
+            xpercentile(unique(plot_data$x_negative_point)) * 4)
         ypercentile <- ecdf(plot_data$y)
-        plot_data$neg_y_qval <-
-            xpercentile(unique(plot_data$y_negative_point)) * 4
+        plot_data$neg_y_qval <-(
+            ypercentile(unique(plot_data$y_negative_point)) * 4)
         
         return (plot_data)
     }
@@ -408,7 +411,7 @@ group_average <-
              complete_data,
              feature = "avg",
              window_size = 6,
-             threshold = 2) {
+             threshold ) {
         window_data <-
             get_window_data(
                 x = x, complete_data = complete_data , feature = feature,window_size = window_size,threshold = threshold

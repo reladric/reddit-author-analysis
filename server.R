@@ -10,7 +10,7 @@ shinyServer(function(input, output) {
     updateProgress <- function(value = NULL, detail = NULL) {
         if (is.null(value)) {
             value <- progress$getValue()
-            value <- value + (progress$getMax() - value) / 5
+            value <- value + (progress$getMax() - value) / 6
         }
         progress$set(value = value, detail = detail)
     }
@@ -321,7 +321,8 @@ shinyServer(function(input, output) {
                     group_average,
                     complete_data = score_data,
                     feature = values$selected_feature,
-                    window_size = values$selected_window
+                    window_size = values$selected_window,
+                    threshold=values$threshold
                 )
             ))
         colnames(monthly_averages) <- c("month", "fem", "mr")
@@ -362,9 +363,11 @@ shinyServer(function(input, output) {
         plot_data <-
             current_month_data()
         hline <-
-            data.frame(yint = unique(plot_data$neg_x_qval) ,lt = 'Negative Score Axis')
+            data.frame(yint = unique(plot_data$neg_y_qval) ,lt = 'Negative Score Axis')
         vline <-
-            data.frame(xint = unique(plot_data$neg_y_qval),lt = 'Negative Score Axis')
+            data.frame(xint = unique(plot_data$neg_x_qval),lt = 'Negative Score Axis')
+        plot_data$x_qval<- plot_data$x_qval-0.5
+        plot_data$y_qval<- plot_data$y_qval-0.5
         plot_data_table <- data.table(plot_data)
         quadrant_counts <-
             as.data.frame(plot_data_table[order(x_qval, y_qval), list(count = length(user)), by = list(x_qval, y_qval)])
@@ -373,8 +376,8 @@ shinyServer(function(input, output) {
         plot <-
             ggplot(data = quadrant_counts, aes(x = `x_qval`, y = `y_qval`)) +
             geom_tile(aes(fill =  `ratio`))  +
-            geom_hline(yintercept = 2.5) +
-            geom_vline(xintercept = 2.5) +
+            geom_hline(yintercept = 2) +
+            geom_vline(xintercept = 2) +
             scale_fill_gradient2(low = "blue",
                                  high = "darkgreen",
                                  guide = "colorbar") +
@@ -487,9 +490,9 @@ shinyServer(function(input, output) {
     output$currentMonthPlot <- renderPlot({
         plot_data <-
             current_month_data()
-        hline <-
+        hlinedf <-
             data.frame(yint = unique(plot_data$y_negative_point),lt = 'Negative Score Axis')
-        vline <-
+        vlinedf <-
             data.frame(xint = unique(plot_data$x_negative_point),lt = 'Negative Score Axis')
         
         plot <-
@@ -516,10 +519,10 @@ shinyServer(function(input, output) {
             geom_vline(xintercept = unique(plot_data$vline)) +
             geom_hline(yintercept = unique(plot_data$hline)) +
             geom_hline(
-                data = hline,aes(yintercept = yint,linetype = lt),color = "red",size = 1
+                data = hlinedf,aes(yintercept = yint,linetype = lt),color = "red",size = 1
             ) +
             geom_vline(
-                data = vline,aes(xintercept = xint,linetype = lt),color = "red",size = 1
+                data = vlinedf,aes(xintercept = xint,linetype = lt),color = "red",size = 1
             ) +
             scale_colour_discrete(guide = "none") +
             scale_linetype_manual(name = 'Legend',values = 1,guide = "legend") +
@@ -645,7 +648,6 @@ shinyServer(function(input, output) {
     #### Tab 2 Vector Field - Two Month ago ----
     output$secondVectorField <-
         renderPlot({
-            print(values$selected_x_quantile)
             second_month_data <- plotdata_for_month(
                 x = values$selected_month - 2,
                 complete_data = score_data,
@@ -785,7 +787,6 @@ shinyServer(function(input, output) {
     #### Tab 2 Vector Field - Two Month forward ----
     output$secondForwardField <-
         renderPlot({
-            print(values$selected_x_quantile)
             second_month_data <- plotdata_for_month(
                 x = values$selected_month + 2,
                 complete_data = score_data,
