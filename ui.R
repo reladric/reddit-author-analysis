@@ -134,13 +134,13 @@ shinyUI(fluidPage(# Application title
           introBox(
             plotOutput("groupAverage"),
             data.step = 4,
-            data.intro = "This graph plots for window ending in each month, the average karma scored by the selected users in both subreddits in current window"
+            data.intro = "This graph plots for each possible window of selected size, the average karma scored by the selected users in both subreddits in current window"
           )
         )), column(6, wellPanel(
           introBox(
             plotOutput("groupCounts"),
             data.step = 5,
-            data.intro = "This graph plots for window ending in each month, the number of posts made by selected users in both subreddits in current window"
+            data.intro = "This graph plots for each possible window of selected size, the number of posts made by selected users in both subreddits in current window"
           )
         ))),
         fluidRow(column(6,  wellPanel(
