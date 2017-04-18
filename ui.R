@@ -11,6 +11,8 @@ library(shiny)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(# Application title
+  introjsUI(),
+  # Application title
   fluidRow(column(
     12,
     style = "border:0px;",
@@ -19,7 +21,9 @@ shinyUI(fluidPage(# Application title
   ,
   
   fluidRow(column(
-    12, tabsetPanel(
+    12,
+    tabsetPanel(
+      selected = "Karma Analysis",
       tabPanel(
         "User Analysis",
         fluidRow(
@@ -101,43 +105,108 @@ shinyUI(fluidPage(# Application title
       ),
       tabPanel(
         "Karma Analysis",
+        fluidRow(column(12, wellPanel(uiOutput("tutorial"), width = "20%"))),
         fluidRow(fluidRow(
-          column(4, wellPanel(uiOutput("window_size"))),
-          column(4, wellPanel(uiOutput("feature"))),
-          column(4, wellPanel(uiOutput("threshold")))
+          column(4,
+                 wellPanel(
+                   introBox(
+                     uiOutput("window_size") ,
+                     data.step = 1,
+                     data.intro = "This drop down selects the window size. All operations such as data selection, mean, median, post count etc is computed in windows of selected size. This value controls all of the plots and data below"
+                   )
+                 )),
+          column(4, wellPanel(
+            introBox(
+              uiOutput("feature"),
+              data.step = 2,
+              data.intro = "You can choose to visualize either raw score or score per comment in the window"
+            )
+          )),
+          column(4, wellPanel(
+            introBox(
+              uiOutput("threshold"),
+              data.step = 3,
+              data.intro = "You can set minimums on number of posts that a user has to make to be included in below analysis"
+            )
+          ))
         )),
         fluidRow(column(6, wellPanel(
-          plotOutput("groupAverage")
-        )),column(6, wellPanel(
-          plotOutput("groupCounts")
+          introBox(
+            plotOutput("groupAverage"),
+            data.step = 4,
+            data.intro = "This graph plots for window ending in each month, the average karma scored by the selected users in both subreddits in current window"
+          )
+        )), column(6, wellPanel(
+          introBox(
+            plotOutput("groupCounts"),
+            data.step = 5,
+            data.intro = "This graph plots for window ending in each month, the number of posts made by selected users in both subreddits in current window"
+          )
         ))),
-        fluidRow(column(6, wellPanel(uiOutput(
-          "scale"
-        ))), column(6, wellPanel(
-          uiOutput("centering")
+        fluidRow(column(6,  wellPanel(
+          introBox(
+            uiOutput("centering"),
+            data.step = 6,
+            data.intro = "For the graphs below, select if you want to use mean or median as the center. The selected center will be the axis in the density plot below"
+          )
+        )), column(6, wellPanel(
+          introBox(
+            uiOutput("scale"),
+            data.step = 7,
+            data.intro = "For the graphs below, select if you want to Scale the selected variable. i.e subtract the center and divide by standard deviation"
+          )
         ))),
         fluidRow(column(12, wellPanel(
-          uiOutput("monthSelector")
+          introBox(
+            uiOutput("monthSelector"),
+            data.step = 8,
+            data.intro = "Select the month to be used as window end in the graphs below. Changing this slides the window across time scale"
+          )
         ))),
         fluidRow(style = "border-top:0px;padding-top:0px", column(6, wellPanel(
-          plotOutput("currentMonthHeatMap", width = "100%")
+          introBox(
+            plotOutput("currentMonthHeatMap", width = "100%"),
+            data.step = 9,
+            data.intro = "With median of selected variable in  Feminism(x-axis) and  Mensright(y-axis) as axis , this plot shows the ratio of users who are in each quantiles combination. Dependant on scaling, independant of center variable"
+          )
         )), column(6, wellPanel(
-          plotOutput("currentMonthPlot", width = "100%")
+          introBox(
+            plotOutput("currentMonthPlot", width = "100%"),
+            data.step = 10,
+            data.intro = "With the selected center of selected variable in Feminism(x-axis) and  Mensright(y-axis) as axis , this plot shows the denisty of across continous axis. Dependant on scaling and center variable"
+          )
         ))),
-        fluidRow(style = "border:0px;padding:0px",
-          column(4, wellPanel(h6("Click on quantile box below to explore"))),
-          column(4, wellPanel()),
-          column(4, wellPanel(h6("Click on quantile box below to explore")))
+        introBox(
+          fluidRow(
+            style = "border:0px;padding:0px",
+            column(4, wellPanel(
+              plotOutput("firstVectorField", click = "firstVectorclick")
+            )),
+            column(4, wellPanel(plotOutput(
+              "currentMonthHeatMap_1"
+            ))),
+            column(4, wellPanel(
+              plotOutput("firstForwardField", click = "firstForwardclick")
+            ))
+          ),
+          data.step = 11,
+          data.intro = "You can click on quantile box in left plot to see the source of users from previous window to current window. For the plots on right, you can see destination quantile box from current window to next window "
         ),
-        fluidRow(style = "border:0px;padding:0px",
-          column(4, wellPanel(plotOutput("firstVectorField", click = "firstVectorclick"))),
-          column(4, wellPanel(plotOutput("currentMonthHeatMap_1"))),
-          column(4, wellPanel(plotOutput("firstForwardField", click = "firstForwardclick")))
-        ),
-        fluidRow(style = "border:0px;padding:0px",
-          column(4, wellPanel(plotOutput("secondVectorField", click = "secondVectorclick"))),
-          column(4, wellPanel(plotOutput("currentMonthHeatMap_2"))),
-          column(4, wellPanel(plotOutput("secondForwardField", click = "secondForwardclick")))
+        introBox(
+          fluidRow(
+            style = "border:0px;padding:0px",
+            column(4, wellPanel(
+              plotOutput("secondVectorField", click = "secondVectorclick")
+            )),
+            column(4, wellPanel(plotOutput(
+              "currentMonthHeatMap_2"
+            ))),
+            column(4, wellPanel(
+              plotOutput("secondForwardField", click = "secondForwardclick")
+            ))
+          ),
+          data.step = 12,
+          data.intro = "Similar to above but looks 2 windows before current window for the past and 2 windows in to the future"
         )
       )
     )

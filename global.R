@@ -3,6 +3,7 @@ library(ggplot2)
 library(scales)
 library(data.table)
 library(gridExtra)
+library(rintrojs)
 file_loaded <- 0
 #### Load data from csvs ----
 compute_data <-
