@@ -106,8 +106,10 @@ shinyUI(fluidPage(# Application title
           column(4, wellPanel(uiOutput("feature"))),
           column(4, wellPanel(uiOutput("threshold")))
         )),
-        fluidRow(column(12, wellPanel(
+        fluidRow(column(6, wellPanel(
           plotOutput("groupAverage")
+        )),column(6, wellPanel(
+          plotOutput("groupCounts")
         ))),
         fluidRow(column(6, wellPanel(uiOutput(
           "scale"

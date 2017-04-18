@@ -418,3 +418,16 @@ group_average <-
             )
         return (c(x,mean(window_data$x), mean(window_data$y)))
     }
+#### Get group post count of selected feature ----
+group_count <-
+  function(x,
+           complete_data,
+           feature = "avg",
+           window_size = 6,
+           threshold ) {
+    window_data <-
+      get_window_data(
+        x = x, complete_data = complete_data , feature = feature,window_size = window_size,threshold = threshold
+      )
+    return (c(x,sum(window_data$fem_posts), sum(window_data$mr_posts)))
+  }

@@ -331,7 +331,7 @@ shinyServer(function(input, output) {
                                                                             "feminism")) + geom_line(aes(y = mr, colour = "mensrights")) +
             ggtitle(
                 paste(
-                    "Group Average of Feminism & Mensrights",
+                    "Group Average inFeminism & Mensrights",
                     values$selected_feature,
                     "for window:",
                     values$selected_window,
@@ -345,6 +345,40 @@ shinyServer(function(input, output) {
             xlab("Month (Window end)") +
             ylab("Group Average")
         plot
+    })
+    #### Tab 2 Post count of the whole group in both subreddit
+    output$groupCounts<- renderPlot({
+      monthly_counts <-
+        as.data.frame(t(
+          sapply(
+            unique(score_data$month),
+            group_count,
+            complete_data = score_data,
+            feature = values$selected_feature,
+            window_size = values$selected_window,
+            threshold=values$threshold
+          )
+        ))
+      colnames(monthly_counts) <- c("month", "fem", "mr")
+      plot <-
+        ggplot(data = monthly_counts, aes(month)) + geom_line(aes(y = fem, colour =
+                                                                      "feminism")) + geom_line(aes(y = mr, colour = "mensrights")) +
+        ggtitle(
+          paste(
+            "Group Post count in Feminism & Mensrights",
+            values$selected_feature,
+            "for window:",
+            values$selected_window,
+            sep = " "
+          )
+        ) +      theme(plot.title = element_text(
+          size = 15,
+          face = "bold",
+          hjust = 0.5
+        )) +
+        xlab("Month (Window end)") +
+        ylab("Group post count")
+      plot
     })
     ### Tab 2 - Data extraction based on month selection
     current_month_data <- reactive({
