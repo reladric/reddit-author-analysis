@@ -102,8 +102,9 @@ shinyUI(fluidPage(# Application title
       tabPanel(
         "Karma Analysis",
         fluidRow(fluidRow(
-          column(6, wellPanel(uiOutput("window_size"))),
-          column(6, wellPanel(uiOutput("feature")))
+          column(4, wellPanel(uiOutput("window_size"))),
+          column(4, wellPanel(uiOutput("feature"))),
+          column(4, wellPanel(uiOutput("threshold")))
         )),
         fluidRow(column(12, wellPanel(
           plotOutput("groupAverage")

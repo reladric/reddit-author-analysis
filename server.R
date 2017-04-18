@@ -33,15 +33,22 @@ shinyServer(function(input, output) {
     activity_data <- list_of_values[[2]]
     user_comments <- list_of_values[[3]]
     score_data <- list_of_values[[4]]
+    
     centering_values <- c("mean", "median")
     names(centering_values) <- c("Mean", "Median")
+    
     feature_values <- c("avg", "score")
     names(feature_values) <-
         c("Score per Post in the window", "Raw score in the window")
+    
     window_values <- seq(1, (max(score_data$month) / 2))
     names(window_values) <- window_values
+    
     scale_values <- c(TRUE, FALSE)
     names(scale_values) <- c("Yes", "No")
+    
+    threshold_values <- c(0,1,2,5,10)
+    names(threshold_values) <- threshold_values
     #### Reacive init ----
     values <-
         reactiveValues(
@@ -58,7 +65,8 @@ shinyServer(function(input, output) {
             firstForward_x_quantile = 1,
             firstForward_y_quantile = 1,
             secondForward_x_quantile = 1,
-            secondForward_y_quantile = 1
+            secondForward_y_quantile = 1,
+            threshold = 2
         )
     #### Tab 1 - User Analysis ----
     #### Tab 1 -  Quadrant selection for users  ----
@@ -267,7 +275,15 @@ shinyServer(function(input, output) {
                 window_values[length(window_values) / 2]
         )
     })
-    
+    output$threshold <- renderUI({
+        selectInput(
+            "threshold",
+            choices = threshold_values,
+            label = "Threshold on number of posts in window",
+            selected = 2
+            
+        )
+    })
     output$scale <- renderUI({
         selectInput(
             "scale",
@@ -292,6 +308,9 @@ shinyServer(function(input, output) {
     })
     observeEvent(input$scale, {
         values$scale <- input[["scale"]]
+    })
+    observeEvent(input$threshold, {
+        values$threshold <- input[["threshold"]]
     })
     #### Tab 2 Group Average of metric ----
     output$groupAverage <- renderPlot({
@@ -334,21 +353,18 @@ shinyServer(function(input, output) {
             values$selected_feature,
             values$scale,
             values$center,
-            as.numeric(values$selected_window)
+            as.numeric(values$selected_window),
+            threshold = values$threshold
         )
     })
     #### Tab 2 - Quadrant Heatmap ----
     output$currentMonthHeatMap <- renderPlot({
         plot_data <-
             current_month_data()
-        xpercentile <- ecdf(plot_data$x)
-        ypercentile <- ecdf(plot_data$y)
         hline <-
-            data.frame(yint = ypercentile(unique(plot_data$y_negative_point)) *
-                           4,lt = 'Negative Score Axis')
+            data.frame(yint = unique(plot_data$neg_x_qval) ,lt = 'Negative Score Axis')
         vline <-
-            data.frame(xint = xpercentile(unique(plot_data$x_negative_point)) *
-                           4,lt = 'Negative Score Axis')
+            data.frame(xint = unique(plot_data$neg_y_qval),lt = 'Negative Score Axis')
         plot_data_table <- data.table(plot_data)
         quadrant_counts <-
             as.data.frame(plot_data_table[order(x_qval, y_qval), list(count = length(user)), by = list(x_qval, y_qval)])
@@ -475,10 +491,12 @@ shinyServer(function(input, output) {
             data.frame(yint = unique(plot_data$y_negative_point),lt = 'Negative Score Axis')
         vline <-
             data.frame(xint = unique(plot_data$x_negative_point),lt = 'Negative Score Axis')
-
+        
         plot <-
             ggplot(plot_data, aes(x = x, y = y)) +
-            stat_density2d(aes(alpha = ..level..), geom = "polygon") +
+            stat_density2d(aes(alpha = ..level..,fill = ..level..), geom = "polygon") +
+            scale_fill_gradient(low = "#3ea87a", high = "#181f1c") +
+            scale_alpha(range = c(0.00, 0.75), guide = FALSE) +
             ggtitle(
                 paste(
                     "Mensrights v Feminism - Density contour map",
@@ -495,10 +513,8 @@ shinyServer(function(input, output) {
                 face = "bold",
                 hjust = 0.5
             )) +
-            
             geom_vline(xintercept = unique(plot_data$vline)) +
             geom_hline(yintercept = unique(plot_data$hline)) +
-            scale_fill_gradient(low = "blue", high = "green") +
             geom_hline(
                 data = hline,aes(yintercept = yint,linetype = lt),color = "red",size = 1
             ) +
@@ -507,7 +523,7 @@ shinyServer(function(input, output) {
             ) +
             scale_colour_discrete(guide = "none") +
             scale_linetype_manual(name = 'Legend',values = 1,guide = "legend") +
-
+            
             xlab(paste("Feminism", values$selected_feature, sep = " ")) +
             ylab(paste("MensRights", values$selected_feature, sep = " "))
         plot
@@ -564,7 +580,8 @@ shinyServer(function(input, output) {
                 feature = values$selected_feature,
                 scale = values$scale,
                 window_size = values$selected_window,
-                center = values$center
+                center = values$center,
+                threshold = values$threshold
             )
             
             base_month_data <- current_month_data()[, c(1, 16, 17)]
@@ -635,7 +652,8 @@ shinyServer(function(input, output) {
                 feature = values$selected_feature,
                 scale = values$scale,
                 window_size = values$selected_window,
-                center = values$center
+                center = values$center,
+                threshold = values$threshold
             )
             
             base_month_data <- current_month_data()[, c(1, 16, 17)]
@@ -705,7 +723,8 @@ shinyServer(function(input, output) {
                 feature = values$selected_feature,
                 scale = values$scale,
                 window_size = values$selected_window,
-                center = values$center
+                center = values$center,
+                threshold = values$threshold
             )
             base_month_data <- current_month_data()[, c(1, 16, 17)]
             colnames(base_month_data) <-
@@ -773,7 +792,8 @@ shinyServer(function(input, output) {
                 feature = values$selected_feature,
                 scale = values$scale,
                 window_size = values$selected_window,
-                center = values$center
+                center = values$center,
+                threshold = values$threshold
             )
             
             base_month_data <- current_month_data()[, c(1, 16, 17)]

@@ -214,7 +214,7 @@ heatdata_for_month <- function(x, complete_data) {
 }
 #### Obtain aggregated window data ----
 get_window_data <-
-    function(x,  complete_data,feature, window_size) {
+    function(x,  complete_data,feature, window_size, threshold = 2) {
         if (x >= window_size) {
             w_start <-  x - window_size
             w_end <-  x
@@ -241,6 +241,9 @@ get_window_data <-
                         active_duration = length(month)
                     ), by = user]
                 plot_data <- as.data.frame(plot_data)
+                plot_data <-
+                    plot_data[(plot_data$fem_posts >= threshold &
+                                   plot_data$fem_posts >= threshold),]
                 plot_data <-
                     plot_data[(plot_data$mr_posts != 0 &
                                    plot_data$fem_posts != 0),]
@@ -295,86 +298,120 @@ get_window_data <-
     }
 #### Generate Scatter Plot data given month ----
 plotdata_for_month <-
-  function(x,
-           complete_data,
-           feature = "avg",
-           scale = TRUE,
-           center = "median",
-           window_size = 6) {
-    # Window start and end
-    plot_data <-
-      get_window_data(x,  complete_data, feature, window_size)
-    if (center == "mean") {
-      x_center <- mean(plot_data$x)
-      y_center <- mean(plot_data$y)
+    function(x,
+             complete_data,
+             feature = "avg",
+             scale = TRUE,
+             center = "median",
+             window_size = 6,
+             threshold = 2) {
+        # Window start and end
+        plot_data <-
+            get_window_data(x,  complete_data, feature, window_size, threshold)
+        if (center == "mean") {
+            x_center <- mean(plot_data$x)
+            y_center <- mean(plot_data$y)
+        }
+        else{
+            x_center <- median(plot_data$x)
+            y_center <- median(plot_data$y)
+        }
+        
+        if (scale) {
+            x_sigma <- sd(plot_data$x)
+            plot_data$x <-
+                (plot_data$x - x_center) / x_sigma
+            y_center <- mean(plot_data$y)
+            y_sigma <- sd(plot_data$y)
+            plot_data$y <-
+                (plot_data$y - y_center) / y_sigma
+        }
+        
+        if (center == "mean") {
+            plot_data$hline <- mean(plot_data$x)
+            plot_data$vline <- mean(plot_data$y)
+        }
+        else{
+            plot_data$hline <- median(plot_data$x)
+            plot_data$vline <- median(plot_data$y)
+        }
+        
+        
+        x_quantile_values <- quantile(plot_data$x)
+        y_quantile_values <- quantile(plot_data$y)
+        plot_data$month_number <- x
+        plot_data$x_qval <- 4
+        plot_data$y_qval <- 4
+        if (dim(plot_data[(plot_data$x < x_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$x < x_quantile_values[4]),]$x_qval <- 3
+        }
+        if (dim(plot_data[(plot_data$x < x_quantile_values[3]),])[1] >
+            0) {
+            plot_data[(plot_data$x < x_quantile_values[3]),]$x_qval <- 2
+        }
+        if (dim(plot_data[(plot_data$x < x_quantile_values[2]),])[1] >
+            0) {
+            plot_data[(plot_data$x < x_quantile_values[2]),]$x_qval <- 1
+        }
+        
+        if (dim(plot_data[(plot_data$y <= y_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$y <= y_quantile_values[4]),]$y_qval <- 3
+        }
+        if (dim(plot_data[(plot_data$y <= y_quantile_values[3]),])[1] >
+            0) {
+            plot_data[(plot_data$y <= y_quantile_values[3]),]$y_qval <- 2
+        }
+        if (dim(plot_data[(plot_data$y <= y_quantile_values[2]),])[1] >
+            0) {
+            plot_data[(plot_data$y <= y_quantile_values[2]),]$y_qval <- 1
+        }
+        
+        
+        
+        if (dim(plot_data[(plot_data$x < x_quantile_values[3]),])[1] >
+            0) {
+            plot_data[(plot_data$x < x_quantile_values[3]),]$x_qval <- 2
+        }
+        if (dim(plot_data[(plot_data$x < x_quantile_values[2]),])[1] >
+            0) {
+            plot_data[(plot_data$x < x_quantile_values[2]),]$x_qval <- 1
+        }
+        
+        if (dim(plot_data[(plot_data$y <= y_quantile_values[4]),])[1] >
+            0) {
+            plot_data[(plot_data$y <= y_quantile_values[4]),]$y_qval <- 3
+        }
+        if (dim(plot_data[(plot_data$y <= y_quantile_values[3]),])[1] >
+            0) {
+            plot_data[(plot_data$y <= y_quantile_values[3]),]$y_qval <- 2
+        }
+        if (dim(plot_data[(plot_data$y <= y_quantile_values[2]),])[1] >
+            0) {
+            plot_data[(plot_data$y <= y_quantile_values[2]),]$y_qval <- 1
+        }
+        
+        print(x_quantile_values)
+        xpercentile <- ecdf(plot_data$x)
+        plot_data$neg_x_qval <-
+            xpercentile(unique(plot_data$x_negative_point)) * 4
+        ypercentile <- ecdf(plot_data$y)
+        plot_data$neg_y_qval <-
+            xpercentile(unique(plot_data$y_negative_point)) * 4
+        
+        return (plot_data)
     }
-    else{
-      x_center <- median(plot_data$x)
-      y_center <- median(plot_data$y)
-    }
-    
-    if (scale) {
-      x_sigma <- sd(plot_data$x)
-      plot_data$x <-
-        (plot_data$x - x_center) / x_sigma
-      y_center <- mean(plot_data$y)
-      y_sigma <- sd(plot_data$y)
-      plot_data$y <-
-        (plot_data$y - y_center) / y_sigma
-    }
-    
-    if (center == "mean") {
-      plot_data$hline <- mean(plot_data$x)
-      plot_data$vline <- mean(plot_data$y)
-    }
-    else{
-      plot_data$hline <- median(plot_data$x)
-      plot_data$vline <- median(plot_data$y)
-    }
-    
-    
-    x_quantile_values <- quantile(plot_data$x)
-    y_quantile_values <- quantile(plot_data$y)
-    plot_data$month_number <- x
-    plot_data$x_qval <- 4
-    plot_data$y_qval <- 4
-    if (dim(plot_data[(plot_data$x <= x_quantile_values[4]), ])[1] >
-        0) {
-      plot_data[(plot_data$x <= x_quantile_values[4]), ]$x_qval <- 3
-    }
-    if (dim(plot_data[(plot_data$x < x_quantile_values[3]), ])[1] >
-        0) {
-      plot_data[(plot_data$x <= x_quantile_values[3]), ]$x_qval <- 2
-    }
-    if (dim(plot_data[(plot_data$x < x_quantile_values[2]), ])[1] >
-        0) {
-      plot_data[(plot_data$x < x_quantile_values[2]), ]$x_qval <- 1
-    }
-    
-    if (dim(plot_data[(plot_data$y <= y_quantile_values[4]), ])[1] >
-        0) {
-      plot_data[(plot_data$y <= y_quantile_values[4]), ]$y_qval <- 3
-    }
-    if (dim(plot_data[(plot_data$y < y_quantile_values[3]), ])[1] >
-        0) {
-      plot_data[(plot_data$y <= y_quantile_values[3]), ]$y_qval <- 2
-    }
-    if (dim(plot_data[(plot_data$y < y_quantile_values[2]), ])[1] >
-        0) {
-      plot_data[(plot_data$y < y_quantile_values[2]), ]$y_qval <- 1
-    }
-    
-    return (plot_data)
-  }
 #### Get group average of selected feature ----
 group_average <-
     function(x,
              complete_data,
              feature = "avg",
-             window_size = 6) {
+             window_size = 6,
+             threshold = 2) {
         window_data <-
             get_window_data(
-                x = x, complete_data = complete_data , feature = feature,window_size = window_size
+                x = x, complete_data = complete_data , feature = feature,window_size = window_size,threshold = threshold
             )
         return (c(x,mean(window_data$x), mean(window_data$y)))
     }
