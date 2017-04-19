@@ -463,11 +463,12 @@ get_mean_movement <-
         window_size = window_size,
         threshold = threshold
       )
-    
-    xstart <- mean(wd_1$fem_avg)
-    ystart <- mean(wd_1$mr_avg)
-    xend <- mean(wd$fem_avg)
-    yend <- mean(wd$mr_avg)
+    x_field_name <- paste("fem_", feature, sep = "")
+    y_field_name <- paste("mr_", feature, sep = "")  
+    xstart <- mean(wd_1[[x_field_name]])
+    ystart <- mean(wd_1[[y_field_name]])
+    xend <- mean(wd[[x_field_name]])
+    yend <- mean(wd[[y_field_name]])
     current_movement <- c(xstart, xend, ystart, yend)
     names(current_movement) <- c("xstart", "xend", "ystart", "yend")
     return (current_movement)
@@ -496,11 +497,13 @@ get_median_movement <-
         window_size = window_size,
         threshold = threshold
       )
-    
-    xstart <- median(wd_1$fem_avg)
-    ystart <- median(wd_1$mr_avg)
-    xend <- median(wd$fem_avg)
-    yend <- median(wd$mr_avg)
+       x_field_name <- paste("fem_", feature, sep = "")
+    y_field_name <- paste("mr_", feature, sep = "")
+    xstart <- median(wd_1[[x_field_name]])
+    ystart <- median(wd_1[[y_field_name]])
+    xend <- median(wd[[x_field_name]])
+    yend <- median(wd[[y_field_name]])
+ 
     current_movement <- c(xstart, xend, ystart, yend)
     names(current_movement) <- c("xstart", "xend", "ystart", "yend")
     return (current_movement)
