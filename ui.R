@@ -105,7 +105,9 @@ shinyUI(fluidPage(# Application title
       ),
       tabPanel(
         "Karma Analysis",
-        fluidRow(column(12, wellPanel(uiOutput("tutorial"), width = "20%"))),
+        fluidRow(column(12, wellPanel(
+          uiOutput("tutorial"), width = "20%"
+        ))),
         fluidRow(fluidRow(
           column(4,
                  wellPanel(
@@ -146,14 +148,14 @@ shinyUI(fluidPage(# Application title
         fluidRow(column(6, wellPanel(
           introBox(
             plotOutput("mean_movement"),
-            data.step = 5,
-            data.intro = "This graph plots for each possible window of selected size, the average karma scored by the selected users in both subreddits in current window"
+            data.step = 6,
+            data.intro = "This graph tracks the movement of mean of selected variable in both subreddit. Green dot is the starting point, red the ending and blue for everything in between"
           )
         )), column(6, wellPanel(
           introBox(
             plotOutput("median_movement"),
             data.step = 7,
-            data.intro = "This graph plots for each possible window of selected size, the number of posts made by selected users in both subreddits in current window"
+            data.intro = "This graph tracks the median of mean of selected variable in both subreddit. Green dot is the starting point, red the ending and blue for everything in between"
           )
         ))),
         fluidRow(column(6,  wellPanel(

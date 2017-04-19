@@ -415,7 +415,7 @@ shinyServer(function(input, output, session) {
                    col = type,
                    size = type
                  )) +
-      scale_size_manual (values = c(1.5, 0.7, 1.5)) +
+      scale_size_manual (values = c(2, 0.7, 2)) +
       scale_color_manual(
         values = c(
           "end" = "red",
