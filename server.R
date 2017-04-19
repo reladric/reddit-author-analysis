@@ -425,12 +425,16 @@ shinyServer(function(input, output, session) {
         labels = c("end", "path", "start")
       ) +
       ggtitle(paste("Movement of mean of ",
-                    "avg",
+                    values$selected_feature,
                     "- Fem v MR ",
                     sep =
-                      " ")) +
-      xlab(paste("Mean of Feminsim", "avg", sep = "")) +
-      ylab(paste("Mean of Mensrights", "avg", sep = ""))
+                      " ")) +      theme(plot.title = element_text(
+        size = 15,
+        face = "bold",
+        hjust = 0.5
+      )) + 
+      xlab(paste("Mean of Feminsim", "avg", sep = " ")) +
+      ylab(paste("Mean of Mensrights", "avg", sep = " "))
     
   })
   
@@ -483,12 +487,16 @@ shinyServer(function(input, output, session) {
         labels = c("end", "path", "start")
       ) +
       ggtitle(paste("Movement of median of ",
-                    "avg",
+                   values$selected_feature,
                     "- Fem v MR ",
                     sep =
-                      " ")) +
-      xlab(paste("Median of Feminsim", "avg", sep = "")) +
-      ylab(paste("Median of Mensrights", "avg", sep = ""))
+                      " ")) +      theme(plot.title = element_text(
+        size = 15,
+        face = "bold",
+        hjust = 0.5
+      ))  +
+      xlab(paste("Median of Feminsim", "avg", sep = " " )) +
+      ylab(paste("Median of Mensrights", "avg", sep = " "))
     
     
   })
