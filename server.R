@@ -342,7 +342,7 @@ shinyServer(function(input, output, session) {
       ylab("Group Average")
     plot
   })
-  #### Tab 2 Post count of the whole group in both subreddit
+  #### Tab 2 Post count of the whole group in both subreddit ----
   output$groupCounts <- renderPlot({
     monthly_counts <-
       as.data.frame(t(
@@ -375,6 +375,122 @@ shinyServer(function(input, output, session) {
       xlab("Month (Window end)") +
       ylab("Group post count")
     plot
+  })
+  #### Tab 2 Mean of Variable movement over time ----
+  output$mean_movement <- renderPlot({
+    all_movements <-
+      lapply(
+        seq(
+          min(score_data$month) + values$selected_window,
+          max(score_data$month)
+        ),
+        get_mean_movement,
+        feature = values$selected_feature,
+        complete_data = score_data,
+        window_size = values$selected_window,
+        threshold = values$threshold
+      )
+    plot_movements <- as.data.frame(do.call(rbind, all_movements))
+    vector_data <- plot_movements[complete.cases(plot_movements), ]
+    
+    point_data_1 <- vector_data[1, c(1, 3)]
+    colnames(point_data_1) <- c("xend", "yend")
+    point_data_1$type = "start"
+    point_data_2 <-
+      vector_data[c(2:nrow(vector_data) - 1), c(2, 4)]
+    point_data_2$type = "path"
+    point_data_3 <-
+      vector_data[nrow(vector_data), c("xend", "yend")]
+    point_data_3$type = "end"
+    
+    point_data <- rbind(point_data_1, point_data_2, point_data_3)
+    ggplot(data = vector_data,
+           aes(x = xstart , y = ystart)) +
+      geom_segment(aes(xend = xend   , yend = yend),
+                   arrow = arrow(length = unit(0.3, "cm"))) +
+      geom_point(data = point_data,
+                 aes(
+                   x = xend,
+                   y = yend,
+                   col = type,
+                   size = type
+                 )) +
+      scale_size_manual (values = c(1.5, 0.7, 1.5)) +
+      scale_color_manual(
+        values = c(
+          "end" = "red",
+          "path" = "blue",
+          "start" = "green"
+        ),
+        labels = c("end", "path", "start")
+      ) +
+      ggtitle(paste("Movement of mean of ",
+                    "avg",
+                    "- Fem v MR ",
+                    sep =
+                      " ")) +
+      xlab(paste("Mean of Feminsim", "avg", sep = "")) +
+      ylab(paste("Mean of Mensrights", "avg", sep = ""))
+    
+  })
+  
+  #### Tab 2 Median of Variable movement over time ----
+  output$median_movement <- renderPlot({
+    all_movements <-
+      lapply(
+        seq(
+          min(score_data$month) + values$selected_window,
+          max(score_data$month)
+        ),
+        get_median_movement,
+        feature = values$selected_feature,
+        complete_data = score_data,
+        window_size = values$selected_window,
+        threshold = values$threshold
+      )
+    plot_movements <- as.data.frame(do.call(rbind, all_movements))
+    vector_data <- plot_movements[complete.cases(plot_movements), ]
+    
+    point_data_1 <- vector_data[1, c(1, 3)]
+    colnames(point_data_1) <- c("xend", "yend")
+    point_data_1$type = "start"
+    point_data_2 <-
+      vector_data[c(2:nrow(vector_data) - 1), c(2, 4)]
+    point_data_2$type = "path"
+    point_data_3 <-
+      vector_data[nrow(vector_data), c("xend", "yend")]
+    point_data_3$type = "end"
+    
+    point_data <- rbind(point_data_1, point_data_2, point_data_3)
+    ggplot(data = vector_data,
+           aes(x = xstart , y = ystart)) +
+      geom_segment(aes(xend = xend   , yend = yend),
+                   arrow = arrow(length = unit(0.3, "cm"))) +
+      geom_point(data = point_data,
+                 aes(
+                   x = xend,
+                   y = yend,
+                   col = type,
+                   size = type
+                 )) +
+      scale_size_manual (values = c(1.5, 0.7, 1.5)) +
+      scale_color_manual(
+        values = c(
+          "end" = "red",
+          "path" = "blue",
+          "start" = "green"
+        ),
+        labels = c("end", "path", "start")
+      ) +
+      ggtitle(paste("Movement of median of ",
+                    "avg",
+                    "- Fem v MR ",
+                    sep =
+                      " ")) +
+      xlab(paste("Median of Feminsim", "avg", sep = "")) +
+      ylab(paste("Median of Mensrights", "avg", sep = ""))
+    
+    
   })
   ### Tab 2 - Data extraction based on month selection
   current_month_data <- reactive({
@@ -903,14 +1019,15 @@ shinyServer(function(input, output, session) {
           panel.grid.minor = element_blank()
         )
     })
+  #### App Tour ----
   introjs(session)
   output$tutorial <-
     renderUI(actionButton("tutorial", label = "Start Tour"))
   observe({
     input$tutorial
-     ({
-       introjs(session)
-     })
+    ({
+      introjs(session)
+    })
   })
   
 })

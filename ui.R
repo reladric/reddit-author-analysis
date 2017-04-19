@@ -143,36 +143,49 @@ shinyUI(fluidPage(# Application title
             data.intro = "This graph plots for each possible window of selected size, the number of posts made by selected users in both subreddits in current window"
           )
         ))),
+        fluidRow(column(6, wellPanel(
+          introBox(
+            plotOutput("mean_movement"),
+            data.step = 5,
+            data.intro = "This graph plots for each possible window of selected size, the average karma scored by the selected users in both subreddits in current window"
+          )
+        )), column(6, wellPanel(
+          introBox(
+            plotOutput("median_movement"),
+            data.step = 7,
+            data.intro = "This graph plots for each possible window of selected size, the number of posts made by selected users in both subreddits in current window"
+          )
+        ))),
         fluidRow(column(6,  wellPanel(
           introBox(
             uiOutput("centering"),
-            data.step = 6,
+            data.step = 8,
             data.intro = "For the graphs below, select if you want to use mean or median as the center. The selected center will be the axis in the density plot below"
           )
         )), column(6, wellPanel(
           introBox(
             uiOutput("scale"),
-            data.step = 7,
+            data.step = 9,
             data.intro = "For the graphs below, select if you want to Scale the selected variable. i.e subtract the center and divide by standard deviation"
           )
         ))),
         fluidRow(column(12, wellPanel(
           introBox(
             uiOutput("monthSelector"),
-            data.step = 8,
+            data.step = 10,
             data.intro = "Select the month to be used as window end in the graphs below. Changing this slides the window across time scale"
           )
         ))),
         fluidRow(style = "border-top:0px;padding-top:0px", column(6, wellPanel(
           introBox(
             plotOutput("currentMonthHeatMap", width = "100%"),
-            data.step = 9,
+            data.step = 11,
             data.intro = "With median of selected variable in  Feminism(x-axis) and  Mensright(y-axis) as axis , this plot shows the ratio of users who are in each quantiles combination. Dependant on scaling, independant of center variable"
           )
         )), column(6, wellPanel(
           introBox(
             plotOutput("currentMonthPlot", width = "100%"),
-            data.step = 10,
+            data.step = 12,
             data.intro = "With the selected center of selected variable in Feminism(x-axis) and  Mensright(y-axis) as axis , this plot shows the denisty of across continous axis. Dependant on scaling and center variable"
           )
         ))),
@@ -189,7 +202,7 @@ shinyUI(fluidPage(# Application title
               plotOutput("firstForwardField", click = "firstForwardclick")
             ))
           ),
-          data.step = 11,
+          data.step = 13,
           data.intro = "You can click on quantile box in left plot to see the source of users from previous window to current window. For the plots on right, you can see destination quantile box from current window to next window "
         ),
         introBox(
@@ -205,7 +218,7 @@ shinyUI(fluidPage(# Application title
               plotOutput("secondForwardField", click = "secondForwardclick")
             ))
           ),
-          data.step = 12,
+          data.step = 14,
           data.intro = "Similar to above but looks 2 windows before current window for the past and 2 windows in to the future"
         )
       )
