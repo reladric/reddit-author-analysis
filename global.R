@@ -446,3 +446,45 @@ group_average <-
             )
         return (c(x,mean(window_data$x), mean(window_data$y)))
     }
+
+get_mean_movement <-
+  function(x,
+           complete_data,
+           feature,
+           window_size,
+           threshold) {
+    wd_1 <-
+      get_window_data(
+        x - 3,
+        complete_data = complete_data,
+        feature = feature,
+        window_size = window_size,
+        threshold = threshold
+      )
+    wd <-
+      get_window_data(
+        x,
+        complete_data = complete_data,
+        feature = feature,
+        window_size = window_size,
+        threshold = threshold
+      )
+    
+    xstart <- mean(wd_1$fem_avg)
+    ystart <- mean(wd_1$mr_avg)
+    xend <- mean(wd$fem_avg)
+    yend <- mean(wd$mr_avg)
+    current_movement <- c(xstart, xend, ystart, yend)
+    names(current_movement) <- c("xstart", "xend", "ystart", "yend")
+    return (current_movement)
+  }
+
+get_zero_mean_movement<-function(x , complete_data,k=1){
+  current_data<-complete_data[(complete_data$month_num > x-k & complete_data$month_num <= x), ]
+  previous_data<-complete_data[(complete_data$month_num > (x-(2*k)) & complete_data$month_num <= x-k), ]
+  x_end<-mean(current_data$feminism_median)
+  y_end<-mean(current_data$mensrights_median)
+  x_start<-mean(previous_data$feminism_median)
+  y_start<-mean(previous_data$mensrights_median)
+  return (c("xstart"=x_start,"ystart"=y_start,"xend"=x_end,"yend"=y_end ))
+}
